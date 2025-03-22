@@ -7,10 +7,10 @@ export class Traffic {
     this.vehicles = [];
     this.spawnDistance = -120; // How far ahead of the bike to spawn vehicles
     this.despawnDistance = 70; // How far behind the bike to despawn vehicles
-    this.maxActiveVehicles = 10; // Maximum number of active vehicles
-    this.lanes = [-3, 0, 3]; // Lane positions
-    this.minVehicleDistance = 30; // Minimum distance between vehicles in the same lane
-    this.debug = true; // Enable debug visuals by default to help diagnose orientation issues
+    this.maxActiveVehicles = 8; // Reduced from 10 to create more space between vehicles
+    this.lanes = [-4, 0, 4]; // Increased lane spacing for a wider three-lane road
+    this.minVehicleDistance = 50; // Increased from 30 to create more space between vehicles in the same lane
+    this.debug = false; // Disable debug visuals in production
     
     // Check if first parameter is a scene (for new usage) or a number (old usage)
     if (sceneOrWidth && typeof sceneOrWidth.add === 'function') {
@@ -22,11 +22,11 @@ export class Traffic {
     
     // Track last spawn time to avoid clustering
     this.lastSpawnTime = 0;
-    this.spawnCooldown = 0.5; // Seconds between potential spawns
+    this.spawnCooldown = 0.8; // Increased from 0.5 to reduce spawn frequency
   }
   
   // Check if a lane is clear to spawn a new vehicle
-  isLaneClear(lane, bikePosition, minDistance = 40) {
+  isLaneClear(lane, bikePosition, minDistance = 60) { // Increased from 40 to create more space
     for (const vehicle of this.vehicles) {
       // Check if vehicle is in the same lane
       if (Math.abs(vehicle.object.position.x - lane) < 1.5) {
@@ -185,7 +185,7 @@ export class Traffic {
   }
   
   // Check for collision with the bike
-  checkCollision(bikePosition, bikeWidth = 1) {
+  checkCollision(bikePosition, bikeWidth = 1.2) { // Slightly increased bike collision width for better detection
     for (const vehicle of this.vehicles) {
       const vehPos = vehicle.object.position;
       
@@ -198,16 +198,27 @@ export class Traffic {
       const collisionZ = dz < (vehicle.size.length / 2 + bikeWidth / 2);
       
       if (collisionX && collisionZ) {
-        return true; // Collision detected
+        if (this.debug) {
+          console.log('Collision detected with vehicle:', vehicle.type);
+          console.log('Bike position:', bikePosition);
+          console.log('Vehicle position:', vehPos);
+          console.log('Distance X:', dx, 'Distance Z:', dz);
+        }
+        return true;
       }
     }
-    
-    return false; // No collision
+    return false;
   }
   
   // Toggle debug mode and update existing vehicles
-  toggleDebug() {
-    this.debug = !this.debug;
+  toggleDebug(enabled) {
+    if (enabled !== undefined) {
+      // Set the debug state directly if provided
+      this.debug = enabled;
+    } else {
+      // Toggle if no parameter is provided (for backward compatibility)
+      this.debug = !this.debug;
+    }
     
     if (this.debug) {
       // Add debug markers to all existing vehicles

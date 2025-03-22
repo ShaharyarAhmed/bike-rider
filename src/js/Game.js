@@ -17,6 +17,7 @@ export class Game {
     this.clock = new THREE.Clock();
     this.lastTime = 0;
     this.gameOver = false;
+    this.debugMode = false; // Debug mode flag
   }
 
   init() {
@@ -38,12 +39,34 @@ export class Game {
     
     // Set up input handling
     this.inputHandler = new InputHandler();
+    this.setupKeyboardControls();
     
     // Handle window resize
     window.addEventListener('resize', this.onWindowResize.bind(this));
     
     // Create game over message
     this.createGameOverMessage();
+  }
+
+  setupKeyboardControls() {
+    // Add debug toggle key
+    window.addEventListener('keydown', (e) => {
+      // Toggle debug mode with the 'D' key
+      if (e.key === 'd' || e.key === 'D') {
+        this.debugMode = !this.debugMode;
+        console.log(`Debug mode: ${this.debugMode ? 'ON' : 'OFF'}`);
+        
+        // Update debug visualization for traffic
+        if (this.scene.traffic) {
+          this.scene.traffic.toggleDebug(this.debugMode);
+        }
+        
+        // Update debug visualization for the bike
+        if (this.bike && this.bike.toggleDebug) {
+          this.bike.toggleDebug(this.debugMode);
+        }
+      }
+    });
   }
 
   createGameOverMessage() {
@@ -88,7 +111,7 @@ export class Game {
     
     // Reset bike position and speed
     this.bike.object.position.set(0, 0.5, 0);
-    this.bike.speed = 0;
+    this.bike.speed = 5; // Use initial speed value from Bike class
     this.bike.currentTilt = 0;
     this.bike.object.rotation.z = 0;
     
@@ -116,17 +139,23 @@ export class Game {
       return;
     }
     
-    // Handle input
-    this.inputHandler.update();
+    // Process input state for the bike
+    const input = {
+      forward: this.inputHandler.isKeyPressed('ArrowUp'),
+      backward: this.inputHandler.isKeyPressed('ArrowDown'),
+      left: this.inputHandler.isKeyPressed('ArrowLeft'),
+      right: this.inputHandler.isKeyPressed('ArrowRight'),
+      brake: this.inputHandler.isKeyPressed('Space')
+    };
     
-    // Update bike
-    this.bike.update(deltaTime, this.inputHandler);
+    // Update bike with the processed input
+    const bikeStatus = this.bike.update(deltaTime, input);
     
     // Update scene (this will update road and traffic)
     this.scene.update(deltaTime, this.bike.object.position);
     
     // Check for collisions with traffic
-    if (this.scene.checkCollisions(this.bike.object.position)) {
+    if (this.scene.checkCollisions(this.bike.object.position, 1.2)) {
       console.log('Collision with vehicle!');
       // On collision, either slow down or handle crash based on severity
       if (this.bike.speed > 20) {

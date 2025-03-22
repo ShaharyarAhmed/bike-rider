@@ -3,88 +3,125 @@ import * as THREE from 'three';
 export class Bike {
   constructor() {
     // Bike properties
-    this.speed = 5;
+    this.speed = 5; // Initial speed
     this.maxSpeed = 40;
     this.acceleration = 25;
     this.deceleration = 10;
-    this.brakeDeceleration = 30;
-    this.turnSpeed = 3;
-    this.lateralSpeed = 5;
-    this.maxTilt = 0.3; // Maximum tilt angle in radians
-    this.tiltRecoverySpeed = 5; // How fast the bike returns to upright position
+    this.brakeDeceleration = 20;
+    this.turnSpeed = 0.15;
+    this.lateralSpeed = 20; // Increased from 15 to allow faster lane changes
+    this.maxTilt = 0.3;
+    this.tiltRecoverySpeed = 0.7;
     this.currentTilt = 0;
-    this.roadBounds = 4; // Half width of road
+    this.roadBounds = { min: -6, max: 6 }; // Increased from ±4 to ±6 for wider lanes
     
-    // Create the bike
-    this.object = this.createBike();
+    // Create bike object
+    this.object = new THREE.Group();
+    this.createBike();
     
-    // Set initial position
+    // Start in the middle lane (0)
     this.object.position.set(0, 0.5, 0);
   }
   
   createBike() {
-    // Create a group for the bike to allow for tilting
-    const bikeGroup = new THREE.Group();
-    
-    // For now, use a simple box as a placeholder for the bike
+    // Simple rectangle for the bike
     const geometry = new THREE.BoxGeometry(1, 1, 2);
     const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
     const bike = new THREE.Mesh(geometry, material);
     
-    // Add bike to the group
-    bikeGroup.add(bike);
+    // Add bike to the main object
+    this.object.add(bike);
     
     // Set bike to cast shadow
     bike.castShadow = true;
     
-    return bikeGroup;
+    console.log("Simple bike model created and added to scene");
   }
   
-  update(deltaTime, inputHandler) {
-    // Get keyboard input from the inputHandler
-    const keyboard = inputHandler;
+  // Toggle debug visualization for the bike
+  toggleDebug(enabled) {
+    // Remove any existing debug visualizations
+    this.object.children.forEach(child => {
+      if (child.userData && child.userData.isDebug) {
+        this.object.remove(child);
+      }
+    });
     
-    // Handle forward/backward movement (acceleration/deceleration)
-    if (keyboard.isKeyPressed('ArrowUp')) {
-      // Accelerate forward
-      this.speed = Math.min(this.speed + this.acceleration * deltaTime, this.maxSpeed);
-    } else if (keyboard.isKeyPressed('ArrowDown')) {
-      // Apply brakes
-      this.speed = Math.max(this.speed - this.brakeDeceleration * deltaTime, 0);
+    if (enabled) {
+      // Create a wireframe box to show the collision boundary
+      const collisionGeometry = new THREE.BoxGeometry(1.2, 1, 2);
+      const collisionMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x00ff00, 
+        wireframe: true 
+      });
+      const collisionBox = new THREE.Mesh(collisionGeometry, collisionMaterial);
+      collisionBox.position.y = 0.5; // Align with bike center
+      collisionBox.userData.isDebug = true;
+      
+      this.object.add(collisionBox);
+      console.log("Bike debug visualization enabled");
+    }
+  }
+  
+  update(deltaTime, input) {
+    // Accelerate/decelerate based on input
+    if (input.forward) {
+      this.speed += this.acceleration * deltaTime;
+      if (this.speed > this.maxSpeed) {
+        this.speed = this.maxSpeed;
+      }
+    } else if (input.backward) {
+      this.speed -= input.brake ? this.brakeDeceleration * deltaTime : this.deceleration * deltaTime;
+      if (this.speed < 0) {
+        this.speed = 0;
+      }
     } else {
-      // Natural deceleration when no keys are pressed
-      this.speed = Math.max(this.speed - this.deceleration * deltaTime, 0);
+      // Natural deceleration when no input
+      this.speed -= this.deceleration * deltaTime;
+      if (this.speed < 0) {
+        this.speed = 0;
+      }
     }
-    
-    // Move forward based on current speed
+
+    // Move forward
     this.object.position.z -= this.speed * deltaTime;
-    
-    // Reset tilt when no key is pressed
-    let tiltTarget = 0;
-    
-    // Handle left/right movement with tilting
-    if (keyboard.isKeyPressed('ArrowLeft')) {
-      // Move left, but respect road bounds
-      const newX = this.object.position.x - this.lateralSpeed * deltaTime;
-      this.object.position.x = Math.max(newX, -this.roadBounds);
-      tiltTarget = this.maxTilt; // Tilt right when turning left (leaning into turn)
-    } 
-    
-    if (keyboard.isKeyPressed('ArrowRight')) {
-      // Move right, but respect road bounds
-      const newX = this.object.position.x + this.lateralSpeed * deltaTime;
-      this.object.position.x = Math.min(newX, this.roadBounds);
-      tiltTarget = -this.maxTilt; // Tilt left when turning right (leaning into turn)
+
+    // Lateral movement (left/right)
+    let lateralMovement = 0;
+    if (input.left) {
+      lateralMovement = -this.lateralSpeed * deltaTime;
+      this.currentTilt = -this.maxTilt; // Tilt left
+    } else if (input.right) {
+      lateralMovement = this.lateralSpeed * deltaTime;
+      this.currentTilt = this.maxTilt; // Tilt right
+    } else {
+      // Recover from tilt when not turning
+      if (this.currentTilt > 0) {
+        this.currentTilt -= this.tiltRecoverySpeed * deltaTime;
+        if (this.currentTilt < 0) this.currentTilt = 0;
+      } else if (this.currentTilt < 0) {
+        this.currentTilt += this.tiltRecoverySpeed * deltaTime;
+        if (this.currentTilt > 0) this.currentTilt = 0;
+      }
     }
-    
-    // Smoothly adjust tilt
-    if (this.currentTilt < tiltTarget) {
-      this.currentTilt = Math.min(this.currentTilt + this.tiltRecoverySpeed * deltaTime, tiltTarget);
-    } else if (this.currentTilt > tiltTarget) {
-      this.currentTilt = Math.max(this.currentTilt - this.tiltRecoverySpeed * deltaTime, tiltTarget);
+
+    // Apply lateral movement
+    this.object.position.x += lateralMovement;
+
+    // Apply bounds to keep bike on the road
+    if (this.object.position.x < this.roadBounds.min) {
+      this.object.position.x = this.roadBounds.min;
+    } else if (this.object.position.x > this.roadBounds.max) {
+      this.object.position.x = this.roadBounds.max;
     }
-    
-    // Apply tilt rotation
+
+    // Apply tilt to the bike model
     this.object.rotation.z = this.currentTilt;
+    
+    // Return some status info
+    return {
+      speed: this.speed,
+      position: this.object.position.clone()
+    };
   }
 } 

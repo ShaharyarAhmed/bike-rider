@@ -17,9 +17,10 @@ export class Vehicle {
     this.changingLanes = false; // Whether currently changing lanes
     this.targetLaneX = 0; // Target X position for lane change
     this.laneChangeSpeed = 2; // Speed of lane change
-    this.roadWidth = 8; // Total width of the road
-    this.minLanePosition = -3; // Leftmost lane position
-    this.maxLanePosition = 3; // Rightmost lane position
+    this.roadWidth = 12; // Increased from 8 to match the wider road
+    this.minLanePosition = -4; // Leftmost lane position
+    this.maxLanePosition = 4; // Rightmost lane position
+    this.laneWidth = 4; // Width of each lane
   }
   
   getVehicleSize(type) {
@@ -264,15 +265,15 @@ export class Vehicle {
       // Only consider vehicles ahead of us (with smaller Z value since we move in negative Z)
       if (otherPos.z >= myPos.z) continue;
       
-      // Check if in same lane (X position within 1.5 units)
-      if (Math.abs(myPos.x - otherPos.x) > 1.5) continue;
+      // Check if in same lane (X position within 2 units - increased from 1.5)
+      if (Math.abs(myPos.x - otherPos.x) > 2) continue;
       
       // Calculate distance to vehicle ahead
       const distance = myPos.z - otherPos.z;
       
       // If vehicle is close ahead, we need to slow down
       // Safe distance is proportional to our speed
-      const safeDistance = this.speed * 1.5 + 2;
+      const safeDistance = this.speed * 1.5 + 3; // Increased minimum distance
       
       if (distance < safeDistance && distance < minDistance) {
         needToSlow = true;
@@ -345,16 +346,21 @@ export class Vehicle {
     // Otherwise, randomly choose
     let direction = 0;
     
-    if (currentX <= this.minLanePosition + 1) {
+    if (Math.abs(currentX - this.minLanePosition) < 0.5) {
       direction = 1; // Move right
-    } else if (currentX >= this.maxLanePosition - 1) {
+    } else if (Math.abs(currentX - this.maxLanePosition) < 0.5) {
       direction = -1; // Move left
     } else {
       direction = Math.random() > 0.5 ? 1 : -1; // Random direction
     }
     
     // Calculate target lane position
-    const targetX = currentX + (direction * 3); // Move one full lane
+    const targetX = currentX + (direction * this.laneWidth); // Move one full lane (now 4 units)
+    
+    // Don't change lanes if the target would be out of bounds
+    if (targetX < this.minLanePosition || targetX > this.maxLanePosition) {
+      return false;
+    }
     
     // Check if the target lane is clear
     for (const otherVehicle of vehicles) {
@@ -364,11 +370,11 @@ export class Vehicle {
       const otherZ = otherVehicle.object.position.z;
       
       // Skip vehicles not in the target lane
-      if (Math.abs(otherX - targetX) > 1.5) continue;
+      if (Math.abs(otherX - targetX) > 2) continue;
       
       // Check if there's a vehicle in the target lane that's too close
       const zDistance = Math.abs(currentZ - otherZ);
-      if (zDistance < 15) {
+      if (zDistance < 20) { // Increased from 15 to require more space for lane changes
         return false; // Lane change not safe
       }
     }

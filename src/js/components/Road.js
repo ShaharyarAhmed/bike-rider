@@ -7,18 +7,22 @@ export class Road {
       // First parameter is a scene
       this.scene = sceneOrChunkLength;
       this.chunkLength = 100; // Default chunk length
-      this.width = 10;       // Default width
+      this.width = 14;       // Increased from 10 to 14 for wider three-lane road
     } else {
       // First parameter is chunk length (old style)
       this.chunkLength = sceneOrChunkLength || 100;
-      this.width = width || 10;
+      this.width = width || 14; // Increased default width
     }
     
     this.chunks = [];
     this.totalChunks = 3; // Keep 3 chunks at a time
     this.activeChunkIndex = 0;
-    this.shoulderWidth = 1;
+    this.shoulderWidth = 1.5; // Increased shoulder width
     this.object = new THREE.Group();
+    
+    // Lane properties
+    this.lanes = [-4, 0, 4]; // Lane center positions
+    this.laneWidth = 4; // Width of each lane
     
     // Create initial chunks
     this.initChunks();
@@ -61,15 +65,8 @@ export class Road {
     roadMesh.receiveShadow = true;
     chunkGroup.add(roadMesh);
     
-    // Add road markings (center line)
-    const lineWidth = 0.2;
-    const lineGeometry = new THREE.PlaneGeometry(lineWidth, this.chunkLength);
-    const lineMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
-    const centerLine = new THREE.Mesh(lineGeometry, lineMaterial);
-    centerLine.rotation.x = -Math.PI / 2;
-    centerLine.position.y = 0.01; // Slightly above road to prevent z-fighting
-    centerLine.position.z = -this.chunkLength / 2; // Center the line
-    chunkGroup.add(centerLine);
+    // Add lane lines
+    this.addLaneLines(chunkGroup);
     
     // Add side shoulders
     const shoulderGeometry = new THREE.PlaneGeometry(this.shoulderWidth, this.chunkLength);
@@ -95,6 +92,49 @@ export class Road {
     this.addStreetLights(chunkGroup);
     
     return chunkGroup;
+  }
+  
+  addLaneLines(chunkGroup) {
+    // Line properties
+    const lineWidth = 0.2;
+    const dashLength = 3;
+    const gapLength = 2;
+    const combinedLength = dashLength + gapLength;
+    const dashesPerChunk = Math.floor(this.chunkLength / combinedLength);
+    
+    // Line material
+    const lineMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+    
+    // Create lane divider lines (dashed)
+    // Loop for two dividers between three lanes
+    for (let divider = 0; divider < 2; divider++) {
+      const xPos = this.lanes[divider] + this.laneWidth / 2; // Position between lanes
+      
+      // Create dashed line segments
+      for (let i = 0; i < dashesPerChunk; i++) {
+        const startZ = -i * combinedLength;
+        const dashGeometry = new THREE.PlaneGeometry(lineWidth, dashLength);
+        const dash = new THREE.Mesh(dashGeometry, lineMaterial);
+        dash.rotation.x = -Math.PI / 2;
+        dash.position.set(xPos, 0.01, startZ - dashLength/2);
+        chunkGroup.add(dash);
+      }
+    }
+    
+    // Add solid edge lines
+    const edgeLineGeometry = new THREE.PlaneGeometry(lineWidth, this.chunkLength);
+    
+    // Left edge line
+    const leftEdgeLine = new THREE.Mesh(edgeLineGeometry, lineMaterial);
+    leftEdgeLine.rotation.x = -Math.PI / 2;
+    leftEdgeLine.position.set(-this.width/2, 0.01, -this.chunkLength/2);
+    chunkGroup.add(leftEdgeLine);
+    
+    // Right edge line
+    const rightEdgeLine = new THREE.Mesh(edgeLineGeometry, lineMaterial);
+    rightEdgeLine.rotation.x = -Math.PI / 2;
+    rightEdgeLine.position.set(this.width/2, 0.01, -this.chunkLength/2);
+    chunkGroup.add(rightEdgeLine);
   }
   
   addStreetLights(chunkGroup) {
