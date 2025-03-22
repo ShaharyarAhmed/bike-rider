@@ -11,8 +11,8 @@ export class GameScene extends THREE.Scene {
     // Add lighting
     this.setupLights();
     
-    // Create the road
-    this.road = new Road(200, 10); // length, width
+    // Create the road with chunk length and width
+    this.road = new Road(100, 10); // chunkLength, width
     this.add(this.road.object);
   }
   
@@ -34,5 +34,12 @@ export class GameScene extends THREE.Scene {
     directionalLight.shadow.camera.top = 20;
     directionalLight.shadow.camera.bottom = -20;
     this.add(directionalLight);
+  }
+  
+  // Method to update the road
+  updateRoad(bikePosition) {
+    if (this.road) {
+      this.road.update(bikePosition);
+    }
   }
 } 

@@ -54,6 +54,9 @@ export class Game {
     // Update the bike based on input
     this.bike.update(this.inputHandler, deltaTime);
     
+    // Update the road based on bike position
+    this.scene.updateRoad(this.bike.object.position);
+    
     // Update the camera to follow the bike
     const bikePosition = this.bike.object.position;
     this.camera.position.set(
