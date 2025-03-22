@@ -26,4 +26,35 @@ body, html {
   background-color: rgba(0, 0, 0, 0.5);
   padding: 10px;
   z-index: 100;
+}
+
+#game-over {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 3rem;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 2rem;
+  border-radius: 1rem;
+  z-index: 200;
+  display: none;
+}
+
+#restart-button {
+  padding: 1rem 2rem;
+  font-size: 1.5rem;
+  margin-top: 1rem;
+  cursor: pointer;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  transition: background-color 0.3s;
+}
+
+#restart-button:hover {
+  background-color: #c0392b;
 } 

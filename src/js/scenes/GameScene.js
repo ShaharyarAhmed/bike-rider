@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Road } from '../components/Road.js';
+import { Traffic } from '../components/Traffic.js';
 
 export class GameScene extends THREE.Scene {
   constructor() {
@@ -14,6 +15,10 @@ export class GameScene extends THREE.Scene {
     // Create the road with chunk length and width
     this.road = new Road(100, 10); // chunkLength, width
     this.add(this.road.object);
+    
+    // Add traffic system
+    this.traffic = new Traffic(10, 100); // roadWidth, roadLength
+    this.add(this.traffic.object);
   }
   
   setupLights() {
@@ -36,10 +41,24 @@ export class GameScene extends THREE.Scene {
     this.add(directionalLight);
   }
   
-  // Method to update the road
-  updateRoad(bikePosition) {
+  // Method to update the scene
+  update(deltaTime, bikePosition) {
+    // Update the road
     if (this.road) {
       this.road.update(bikePosition);
     }
+    
+    // Update traffic
+    if (this.traffic) {
+      this.traffic.update(deltaTime, bikePosition);
+    }
+  }
+  
+  // Check for collisions with traffic
+  checkCollisions(bikePosition, bikeSize) {
+    if (this.traffic) {
+      return this.traffic.checkCollision(bikePosition, bikeSize);
+    }
+    return false;
   }
 } 

@@ -3,10 +3,10 @@ import * as THREE from 'three';
 export class Bike {
   constructor() {
     // Bike properties
-    this.speed = 0;
+    this.speed = 5;
     this.maxSpeed = 40;
-    this.acceleration = 15;
-    this.deceleration = 15;
+    this.acceleration = 25;
+    this.deceleration = 10;
     this.brakeDeceleration = 30;
     this.turnSpeed = 3;
     this.lateralSpeed = 5;
