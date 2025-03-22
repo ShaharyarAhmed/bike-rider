@@ -12,13 +12,11 @@ export class GameScene extends THREE.Scene {
     // Add lighting
     this.setupLights();
     
-    // Create the road with chunk length and width
-    this.road = new Road(100, 10); // chunkLength, width
-    this.add(this.road.object);
+    // Create the road and pass this scene
+    this.road = new Road(this);
     
-    // Add traffic system
-    this.traffic = new Traffic(10, 100); // roadWidth, roadLength
-    this.add(this.traffic.object);
+    // Add traffic system - pass 'this' as the scene
+    this.traffic = new Traffic(this);
   }
   
   setupLights() {

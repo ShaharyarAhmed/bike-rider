@@ -1,9 +1,19 @@
 import * as THREE from 'three';
 
 export class Road {
-  constructor(chunkLength = 100, width = 10) {
-    this.chunkLength = chunkLength;
-    this.width = width;
+  constructor(sceneOrChunkLength, width) {
+    // Check if first parameter is a scene
+    if (sceneOrChunkLength && typeof sceneOrChunkLength.add === 'function') {
+      // First parameter is a scene
+      this.scene = sceneOrChunkLength;
+      this.chunkLength = 100; // Default chunk length
+      this.width = 10;       // Default width
+    } else {
+      // First parameter is chunk length (old style)
+      this.chunkLength = sceneOrChunkLength || 100;
+      this.width = width || 10;
+    }
+    
     this.chunks = [];
     this.totalChunks = 3; // Keep 3 chunks at a time
     this.activeChunkIndex = 0;
@@ -12,6 +22,11 @@ export class Road {
     
     // Create initial chunks
     this.initChunks();
+    
+    // If a scene was provided, add this object to it
+    if (this.scene) {
+      this.scene.add(this.object);
+    }
   }
   
   initChunks() {

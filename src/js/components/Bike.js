@@ -40,12 +40,15 @@ export class Bike {
     return bikeGroup;
   }
   
-  update(input, deltaTime) {
+  update(deltaTime, inputHandler) {
+    // Get keyboard input from the inputHandler
+    const keyboard = inputHandler;
+    
     // Handle forward/backward movement (acceleration/deceleration)
-    if (input.isKeyPressed('ArrowUp')) {
+    if (keyboard.isKeyPressed('ArrowUp')) {
       // Accelerate forward
       this.speed = Math.min(this.speed + this.acceleration * deltaTime, this.maxSpeed);
-    } else if (input.isKeyPressed('ArrowDown')) {
+    } else if (keyboard.isKeyPressed('ArrowDown')) {
       // Apply brakes
       this.speed = Math.max(this.speed - this.brakeDeceleration * deltaTime, 0);
     } else {
@@ -60,14 +63,14 @@ export class Bike {
     let tiltTarget = 0;
     
     // Handle left/right movement with tilting
-    if (input.isKeyPressed('ArrowLeft')) {
+    if (keyboard.isKeyPressed('ArrowLeft')) {
       // Move left, but respect road bounds
       const newX = this.object.position.x - this.lateralSpeed * deltaTime;
       this.object.position.x = Math.max(newX, -this.roadBounds);
       tiltTarget = this.maxTilt; // Tilt right when turning left (leaning into turn)
     } 
     
-    if (input.isKeyPressed('ArrowRight')) {
+    if (keyboard.isKeyPressed('ArrowRight')) {
       // Move right, but respect road bounds
       const newX = this.object.position.x + this.lateralSpeed * deltaTime;
       this.object.position.x = Math.min(newX, this.roadBounds);

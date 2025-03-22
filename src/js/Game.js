@@ -24,7 +24,7 @@ export class Game {
     this.renderer = createRenderer(this.width, this.height);
     document.getElementById('game-container').appendChild(this.renderer.domElement);
 
-    // Create the game scene
+    // Create the game scene - this will create road and traffic
     this.scene = new GameScene();
     
     // Create the bike
@@ -116,28 +116,39 @@ export class Game {
       return;
     }
     
-    // Update the bike based on input
-    this.bike.update(this.inputHandler, deltaTime);
+    // Handle input
+    this.inputHandler.update();
     
-    // Update the scene (road and traffic)
+    // Update bike
+    this.bike.update(deltaTime, this.inputHandler);
+    
+    // Update scene (this will update road and traffic)
     this.scene.update(deltaTime, this.bike.object.position);
     
-    // Check for collisions
-    if (this.scene.checkCollisions(this.bike.object.position, { width: 1, length: 2 })) {
-      this.handleCrash();
+    // Check for collisions with traffic
+    if (this.scene.checkCollisions(this.bike.object.position)) {
+      console.log('Collision with vehicle!');
+      // On collision, either slow down or handle crash based on severity
+      if (this.bike.speed > 20) {
+        // Major collision at high speed
+        this.handleCrash();
+      } else {
+        // Minor collision, just slow down
+        this.bike.speed = Math.min(this.bike.speed, 5);
+      }
     }
     
-    // Update the camera to follow the bike with a bit more distance
-    const bikePosition = this.bike.object.position;
-    // Adjust camera distance based on bike speed for better visibility
-    const cameraDistance = 10 + (this.bike.speed / 10); // Camera pulls back as bike speeds up
-    
+    // Update camera
+    const cameraDistance = 10 + (this.bike.speed / 10);
     this.camera.position.set(
-      bikePosition.x,
-      bikePosition.y + 5,
-      bikePosition.z + cameraDistance
+      this.bike.object.position.x,
+      this.bike.object.position.y + 5,
+      this.bike.object.position.z + cameraDistance
     );
-    this.camera.lookAt(bikePosition);
+    this.camera.lookAt(this.bike.object.position);
+    
+    // Render the scene
+    this.renderer.render(this.scene, this.camera);
   }
   
   handleCrash() {
@@ -153,6 +164,5 @@ export class Game {
     this.lastTime = currentTime;
     
     this.update(deltaTime);
-    this.renderer.render(this.scene, this.camera);
   }
 } 
