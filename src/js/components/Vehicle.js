@@ -340,11 +340,11 @@ export class Vehicle extends THREE.Object3D {
       bbox.getSize(size);
       
       // Update the vehicle size with actual model dimensions
-      // Add a small buffer to size for better collision detection (10%)
+      // Use exact dimensions without adding buffer
       this.size = {
-        width: Math.max(1.0, size.x * 1.1),  // Use at least 1.0 width
-        height: Math.max(1.0, size.y * 1.1), // Use at least 1.0 height
-        length: Math.max(2.0, size.z * 1.1)  // Use at least 2.0 length
+        width: size.x,
+        height: size.y,
+        length: size.z
       };
       
       console.log(`Model dimensions for ${this.type} (${this.modelFileName}): W:${this.size.width.toFixed(2)}, H:${this.size.height.toFixed(2)}, L:${this.size.length.toFixed(2)}`);
@@ -509,7 +509,12 @@ export class Vehicle extends THREE.Object3D {
     }
     
     // Create new collision box if visibility is turned on
-    if (visible) {
+    if (visible && this.model) {
+      // Get the actual bounding box of the model
+      const bbox = new THREE.Box3().setFromObject(this.model);
+      const center = new THREE.Vector3();
+      bbox.getCenter(center);
+      
       // Create a wireframe box representing the collision bounds
       const boxGeometry = new THREE.BoxGeometry(
         this.size.width,
@@ -526,7 +531,15 @@ export class Vehicle extends THREE.Object3D {
       });
       
       this.collisionBox = new THREE.Mesh(boxGeometry, boxMaterial);
-      this.collisionBox.position.y = this.size.height / 2; // Center vertically
+      
+      // Position the collision box to match the model's center
+      // Make position relative to the vehicle
+      this.collisionBox.position.set(
+        center.x - this.position.x,
+        center.y - this.position.y,
+        center.z - this.position.z
+      );
+      
       this.add(this.collisionBox);
       
       // Add a helper text label
@@ -541,7 +554,7 @@ export class Vehicle extends THREE.Object3D {
       
       if (typeof CSS2DObject !== 'undefined') {
         const label = new CSS2DObject(div);
-        label.position.set(0, this.size.height + 0.5, 0);
+        label.position.set(0, this.size.height / 2 + 0.5, 0);
         this.collisionBox.add(label);
       }
     }

@@ -115,16 +115,34 @@ export class GameScene extends THREE.Scene {
         bikeLength = bike.collisionBox ? bike.collisionBox.geometry.parameters.depth : 2.0;
       }
       
+      // Get bike model center for more accurate collision checks
+      let bikeCenter = new THREE.Vector3();
+      if (bike.model) {
+        const bikeBBox = new THREE.Box3().setFromObject(bike.model);
+        bikeBBox.getCenter(bikeCenter);
+      } else {
+        bikeCenter.copy(bikePosition);
+      }
+      
       // Implement collision detection with the new Traffic class structure
       for (const vehicle of this.traffic.vehicles) {
-        // Calculate distance between bike and vehicle
-        const dx = Math.abs(vehicle.position.x - bikePosition.x);
-        const dz = Math.abs(vehicle.position.z - bikePosition.z);
+        // Get vehicle model center for more accurate collision checks
+        let vehicleCenter = new THREE.Vector3();
+        if (vehicle.model) {
+          const vehicleBBox = new THREE.Box3().setFromObject(vehicle.model);
+          vehicleBBox.getCenter(vehicleCenter);
+        } else {
+          vehicleCenter.copy(vehicle.position);
+        }
+        
+        // Calculate distance between bike and vehicle centers
+        const dx = Math.abs(vehicleCenter.x - bikeCenter.x);
+        const dz = Math.abs(vehicleCenter.z - bikeCenter.z);
         
         // Check if the distance is less than the combined size of the bike and vehicle
         if (dx < (vehicle.size.width / 2 + bikeWidth / 2) && 
             dz < (vehicle.size.length / 2 + bikeLength / 2)) {
-          console.log(`Collision detected! Bike at (${bikePosition.x.toFixed(2)}, ${bikePosition.z.toFixed(2)}), Vehicle at (${vehicle.position.x.toFixed(2)}, ${vehicle.position.z.toFixed(2)})`);
+          console.log(`Collision detected! Bike at (${bikeCenter.x.toFixed(2)}, ${bikeCenter.z.toFixed(2)}), Vehicle at (${vehicleCenter.x.toFixed(2)}, ${vehicleCenter.z.toFixed(2)})`);
           console.log(`Bike size [W:${bikeWidth.toFixed(2)}, L:${bikeLength.toFixed(2)}], Vehicle size [W:${vehicle.size.width.toFixed(2)}, L:${vehicle.size.length.toFixed(2)}]`);
           return true;
         }
