@@ -91,7 +91,37 @@ export class Bike extends THREE.Object3D {
     this.add(model);
     this.model = model;
     
+    // Calculate actual model dimensions
+    this.calculateModelDimensions();
+    
     console.log("Bike model added to scene");
+  }
+  
+  // Calculate actual model dimensions for collision detection
+  calculateModelDimensions() {
+    if (this.model) {
+      // Create a bounding box for the model
+      const bbox = new THREE.Box3().setFromObject(this.model);
+      
+      // Calculate dimensions
+      const size = new THREE.Vector3();
+      bbox.getSize(size);
+      
+      // Store the dimensions for collision detection
+      // Add a small buffer to size for better collision detection (10%)
+      this.modelSize = {
+        width: Math.max(1.0, size.x * 1.1),  // Use at least 1.0 width
+        height: Math.max(1.0, size.y * 1.1), // Use at least 1.0 height
+        length: Math.max(2.0, size.z * 1.1)  // Use at least 2.0 length
+      };
+      
+      console.log(`Bike model dimensions: W:${this.modelSize.width.toFixed(2)}, H:${this.modelSize.height.toFixed(2)}, L:${this.modelSize.length.toFixed(2)}`);
+      
+      // Update collision box if visible
+      if (this.collisionBox) {
+        this.setCollisionBoxVisible(true);
+      }
+    }
   }
   
   // Toggle debug visualization for the bike
@@ -144,10 +174,10 @@ export class Bike extends THREE.Object3D {
     
     // Create new collision box if visibility is turned on
     if (visible) {
-      // Bike collision size - typically smaller than visual model
-      const bikeWidth = 1.2;
-      const bikeHeight = 1.5;
-      const bikeLength = 2.0;
+      // Use calculated dimensions if available, otherwise use defaults
+      const bikeWidth = this.modelSize ? this.modelSize.width : 1.2;
+      const bikeHeight = this.modelSize ? this.modelSize.height : 1.5;
+      const bikeLength = this.modelSize ? this.modelSize.length : 2.0;
       
       // Create a wireframe box representing the collision bounds
       const boxGeometry = new THREE.BoxGeometry(

@@ -474,7 +474,7 @@ export class Game {
     this.scene.update(deltaTime, this.bike.position);
     
     // Check for collisions with traffic
-    if (this.scene.checkCollisions(this.bike.position, 1.2)) {
+    if (this.scene.checkCollisions(this.bike.position, this.bike)) {
       console.log('Collision with vehicle!');
       // On collision, either slow down or handle crash based on severity
       if (this.bike.speed > 20) {

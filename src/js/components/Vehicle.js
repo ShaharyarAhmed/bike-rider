@@ -322,8 +322,38 @@ export class Vehicle extends THREE.Object3D {
     this.model = model;
     this.hasModel = true;
     
+    // Calculate the actual model dimensions for the collision box
+    this.calculateModelDimensions();
+    
     // Set brake lights if relevant
     this.updateBrakeLights();
+  }
+  
+  // Calculate actual model dimensions for collision detection
+  calculateModelDimensions() {
+    if (this.model) {
+      // Create a bounding box for the model
+      const bbox = new THREE.Box3().setFromObject(this.model);
+      
+      // Calculate dimensions
+      const size = new THREE.Vector3();
+      bbox.getSize(size);
+      
+      // Update the vehicle size with actual model dimensions
+      // Add a small buffer to size for better collision detection (10%)
+      this.size = {
+        width: Math.max(1.0, size.x * 1.1),  // Use at least 1.0 width
+        height: Math.max(1.0, size.y * 1.1), // Use at least 1.0 height
+        length: Math.max(2.0, size.z * 1.1)  // Use at least 2.0 length
+      };
+      
+      console.log(`Model dimensions for ${this.type} (${this.modelFileName}): W:${this.size.width.toFixed(2)}, H:${this.size.height.toFixed(2)}, L:${this.size.length.toFixed(2)}`);
+      
+      // Update collision box if visible
+      if (this.collisionBox) {
+        this.setCollisionBoxVisible(true);
+      }
+    }
   }
   
   // Update vehicle state and position

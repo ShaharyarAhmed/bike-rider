@@ -100,8 +100,21 @@ export class GameScene extends THREE.Scene {
   }
   
   // Check for collisions with traffic
-  checkCollisions(bikePosition, bikeSize) {
+  checkCollisions(bikePosition, bike) {
     if (this.traffic && this.traffic.vehicles) {
+      // Get actual bike dimensions if available
+      let bikeWidth, bikeLength;
+      
+      if (bike.modelSize) {
+        // Use calculated dimensions from the model
+        bikeWidth = bike.modelSize.width;
+        bikeLength = bike.modelSize.length;
+      } else {
+        // Fallback to a default size if modelSize is not available
+        bikeWidth = bike.collisionBox ? bike.collisionBox.geometry.parameters.width : 1.2;
+        bikeLength = bike.collisionBox ? bike.collisionBox.geometry.parameters.depth : 2.0;
+      }
+      
       // Implement collision detection with the new Traffic class structure
       for (const vehicle of this.traffic.vehicles) {
         // Calculate distance between bike and vehicle
@@ -109,9 +122,10 @@ export class GameScene extends THREE.Scene {
         const dz = Math.abs(vehicle.position.z - bikePosition.z);
         
         // Check if the distance is less than the combined size of the bike and vehicle
-        if (dx < (vehicle.size.width / 2 + bikeSize / 2) && 
-            dz < (vehicle.size.length / 2 + bikeSize / 2)) {
+        if (dx < (vehicle.size.width / 2 + bikeWidth / 2) && 
+            dz < (vehicle.size.length / 2 + bikeLength / 2)) {
           console.log(`Collision detected! Bike at (${bikePosition.x.toFixed(2)}, ${bikePosition.z.toFixed(2)}), Vehicle at (${vehicle.position.x.toFixed(2)}, ${vehicle.position.z.toFixed(2)})`);
+          console.log(`Bike size [W:${bikeWidth.toFixed(2)}, L:${bikeLength.toFixed(2)}], Vehicle size [W:${vehicle.size.width.toFixed(2)}, L:${vehicle.size.length.toFixed(2)}]`);
           return true;
         }
       }
