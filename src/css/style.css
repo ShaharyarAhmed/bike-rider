@@ -57,4 +57,44 @@ body, html {
 
 #restart-button:hover {
   background-color: #c0392b;
+}
+
+/* Debug Panel Styles */
+#debug-panel {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  font-family: monospace;
+  font-size: 14px;
+  max-width: 300px;
+  display: none;
+  z-index: 100;
+}
+
+#debug-panel h3 {
+  margin-top: 0;
+  color: #0f0;
+}
+
+#debug-panel p {
+  margin: 5px 0;
+}
+
+#debug-panel hr {
+  border: none;
+  border-top: 1px solid #333;
+  margin: 10px 0;
+}
+
+/* Orbit Controls Cursor Styles */
+body.debug-camera-active {
+  cursor: grab;
+}
+
+body.debug-camera-active:active {
+  cursor: grabbing;
 } 

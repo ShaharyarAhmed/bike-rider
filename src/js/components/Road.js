@@ -15,7 +15,7 @@ export class Road {
     }
     
     this.chunks = [];
-    this.totalChunks = 3; // Keep 3 chunks at a time
+    this.totalChunks = 3; // Reduced back to 3 chunks for better performance
     this.activeChunkIndex = 0;
     this.shoulderWidth = 1.5; // Increased shoulder width
     this.object = new THREE.Group();
@@ -23,6 +23,9 @@ export class Road {
     // Lane properties
     this.lanes = [-4, 0, 4]; // Lane center positions
     this.laneWidth = 4; // Width of each lane
+    
+    // Track total road distance for game progress
+    this.totalRoadDistance = 0;
     
     // Create initial chunks
     this.initChunks();
@@ -52,12 +55,13 @@ export class Road {
     // Create a road chunk group
     const chunkGroup = new THREE.Group();
     
-    // Create the main road surface
-    const roadGeometry = new THREE.PlaneGeometry(this.width, this.chunkLength);
+    // Create the main road surface with lower segment count for better performance
+    const roadGeometry = new THREE.PlaneGeometry(this.width, this.chunkLength, 1, 4);
     const roadMaterial = new THREE.MeshStandardMaterial({ 
       color: 0x333333, // Dark gray for asphalt
       roughness: 0.8,
-      metalness: 0.2
+      metalness: 0.2,
+      flatShading: true // Use flat shading for better performance
     });
     const roadMesh = new THREE.Mesh(roadGeometry, roadMaterial);
     roadMesh.rotation.x = -Math.PI / 2; // Rotate to be horizontal
@@ -65,12 +69,15 @@ export class Road {
     roadMesh.receiveShadow = true;
     chunkGroup.add(roadMesh);
     
-    // Add lane lines
+    // Add lane lines with simplified geometry
     this.addLaneLines(chunkGroup);
     
-    // Add side shoulders
-    const shoulderGeometry = new THREE.PlaneGeometry(this.shoulderWidth, this.chunkLength);
-    const shoulderMaterial = new THREE.MeshStandardMaterial({ color: 0x999999 });
+    // Add side shoulders with simplified geometry
+    const shoulderGeometry = new THREE.PlaneGeometry(this.shoulderWidth, this.chunkLength, 1, 1);
+    const shoulderMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0x999999,
+      flatShading: true
+    });
     
     // Left shoulder
     const leftShoulder = new THREE.Mesh(shoulderGeometry, shoulderMaterial);
@@ -88,31 +95,30 @@ export class Road {
     rightShoulder.receiveShadow = true;
     chunkGroup.add(rightShoulder);
     
-    // Add street light poles
+    // Add street light poles with reduced count
     this.addStreetLights(chunkGroup);
     
     return chunkGroup;
   }
   
   addLaneLines(chunkGroup) {
-    // Line properties
+    // Line properties - reduce the number of dashes for better performance
     const lineWidth = 0.2;
-    const dashLength = 3;
-    const gapLength = 2;
+    const dashLength = 5; // Increased from 3
+    const gapLength = 5;  // Increased from 2
     const combinedLength = dashLength + gapLength;
-    const dashesPerChunk = Math.floor(this.chunkLength / combinedLength);
+    const dashesPerChunk = Math.floor(this.chunkLength / combinedLength) / 2; // Reduced by half
     
     // Line material
     const lineMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
     
-    // Create lane divider lines (dashed)
-    // Loop for two dividers between three lanes
+    // Create lane divider lines (dashed) with fewer segments
     for (let divider = 0; divider < 2; divider++) {
       const xPos = this.lanes[divider] + this.laneWidth / 2; // Position between lanes
       
-      // Create dashed line segments
+      // Create dashed line segments with wider spacing
       for (let i = 0; i < dashesPerChunk; i++) {
-        const startZ = -i * combinedLength;
+        const startZ = -i * combinedLength * 2; // Double the spacing
         const dashGeometry = new THREE.PlaneGeometry(lineWidth, dashLength);
         const dash = new THREE.Mesh(dashGeometry, lineMaterial);
         dash.rotation.x = -Math.PI / 2;
@@ -122,7 +128,7 @@ export class Road {
     }
     
     // Add solid edge lines
-    const edgeLineGeometry = new THREE.PlaneGeometry(lineWidth, this.chunkLength);
+    const edgeLineGeometry = new THREE.PlaneGeometry(lineWidth, this.chunkLength, 1, 1);
     
     // Left edge line
     const leftEdgeLine = new THREE.Mesh(edgeLineGeometry, lineMaterial);
@@ -138,56 +144,50 @@ export class Road {
   }
   
   addStreetLights(chunkGroup) {
-    // Light pole spacing
-    const spacing = 20; // Distance between poles
+    // Light pole spacing - further increased for better performance
+    const spacing = 80; // Doubled again from 40 to 80
     const poleCount = Math.floor(this.chunkLength / spacing);
     const poleXPosition = this.width / 2 + this.shoulderWidth + 0.5; // Place just outside the shoulder
     
-    // Create pole geometry and materials
-    const poleGeometry = new THREE.CylinderGeometry(0.2, 0.2, 6, 8);
-    const poleMaterial = new THREE.MeshStandardMaterial({ color: 0x666666 });
+    // Create pole geometry with fewer segments
+    const poleGeometry = new THREE.CylinderGeometry(0.2, 0.2, 6, 6); // Reduced from 8 segments
+    const poleMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0x666666,
+      flatShading: true
+    });
     
-    // Create light fixture geometry
+    // Create light fixture geometry with fewer segments
     const fixtureGeometry = new THREE.BoxGeometry(0.6, 0.3, 1.5);
-    const fixtureMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+    const fixtureMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0x333333,
+      flatShading: true
+    });
     
-    // Add poles along the road
+    // Add poles along the road (fewer poles, only one side)
     for (let i = 0; i < poleCount; i++) {
       const poleZ = -i * spacing - spacing / 2;
       
-      // Left side pole
-      const leftPole = new THREE.Mesh(poleGeometry, poleMaterial);
-      leftPole.position.set(-poleXPosition, 3, poleZ);
-      leftPole.castShadow = true;
-      chunkGroup.add(leftPole);
+      // Alternate poles between left and right sides
+      const isLeftSide = i % 2 === 0;
+      const xPos = isLeftSide ? -poleXPosition : poleXPosition;
+      const fixtureOffset = isLeftSide ? 1 : -1;
       
-      // Left light fixture
-      const leftFixture = new THREE.Mesh(fixtureGeometry, fixtureMaterial);
-      leftFixture.position.set(-poleXPosition + 1, 5.8, poleZ);
-      leftFixture.castShadow = true;
-      chunkGroup.add(leftFixture);
+      // Create pole
+      const pole = new THREE.Mesh(poleGeometry, poleMaterial);
+      pole.position.set(xPos, 3, poleZ);
+      pole.castShadow = true;
+      chunkGroup.add(pole);
       
-      // Left light point
-      const leftLight = new THREE.PointLight(0xffffcc, 0.5, 20);
-      leftLight.position.set(-poleXPosition + 1, 5.5, poleZ);
-      chunkGroup.add(leftLight);
+      // Light fixture
+      const fixture = new THREE.Mesh(fixtureGeometry, fixtureMaterial);
+      fixture.position.set(xPos + fixtureOffset, 5.8, poleZ);
+      fixture.castShadow = true;
+      chunkGroup.add(fixture);
       
-      // Right side pole
-      const rightPole = new THREE.Mesh(poleGeometry, poleMaterial);
-      rightPole.position.set(poleXPosition, 3, poleZ);
-      rightPole.castShadow = true;
-      chunkGroup.add(rightPole);
-      
-      // Right light fixture
-      const rightFixture = new THREE.Mesh(fixtureGeometry, fixtureMaterial);
-      rightFixture.position.set(poleXPosition - 1, 5.8, poleZ);
-      rightFixture.castShadow = true;
-      chunkGroup.add(rightFixture);
-      
-      // Right light point
-      const rightLight = new THREE.PointLight(0xffffcc, 0.5, 20);
-      rightLight.position.set(poleXPosition - 1, 5.5, poleZ);
-      chunkGroup.add(rightLight);
+      // Light point with increased range but fewer lights overall
+      const light = new THREE.PointLight(0xffffcc, 0.7, 40);
+      light.position.set(xPos + fixtureOffset, 5.5, poleZ);
+      chunkGroup.add(light);
     }
   }
   
@@ -197,6 +197,9 @@ export class Road {
     const activeTriggerPoint = this.chunks[this.activeChunkIndex].position - this.chunkLength / 2;
     
     if (bikePosition.z < activeTriggerPoint) {
+      // Track road progress
+      this.totalRoadDistance += this.chunkLength;
+      
       // Recycle the last chunk and move it to the front
       const lastChunk = this.chunks.pop();
       const newPosition = this.chunks[0].position - this.chunkLength;
@@ -209,6 +212,37 @@ export class Road {
       
       // Keep the active chunk index at 0
       this.activeChunkIndex = 0;
+      
+      // Only log every 500 units for performance
+      if (this.totalRoadDistance % 500 < this.chunkLength) {
+        console.log(`Road progress: ${this.totalRoadDistance} units`);
+      }
     }
+    
+    // Simplified rendering optimization - no need to check visibility each frame
+    // for such a small number of chunks
+  }
+  
+  // Helper method to get the lane X position
+  getLaneXPosition(laneIndex) {
+    if (laneIndex >= 0 && laneIndex < this.lanes.length) {
+      return this.lanes[laneIndex];
+    }
+    
+    // Default to center lane if invalid index
+    return 0;
+  }
+  
+  // Return the total number of lanes
+  getLaneCount() {
+    return this.lanes.length;
+  }
+  
+  // Get the current active chunk's position
+  getActiveChunkPosition() {
+    if (this.chunks.length > 0 && this.activeChunkIndex < this.chunks.length) {
+      return this.chunks[this.activeChunkIndex].position;
+    }
+    return 0;
   }
 } 
