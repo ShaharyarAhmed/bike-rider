@@ -7,6 +7,7 @@ import { Road } from './components/Road';
 import { Traffic } from './components/Traffic';
 import { Vehicle } from './components/Vehicle';
 import { AssetManager } from './utils/AssetManager.js';
+import { CameraSettings } from './utils/CameraSettings.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 export class Game {
@@ -18,6 +19,7 @@ export class Game {
     this.scene = null;
     this.bike = null;
     this.camera = null;
+    this.cameraSettings = new CameraSettings(); // Initialize camera settings
     this.inputHandler = null;
     this.clock = new THREE.Clock();
     this.lastTime = 0;
@@ -56,10 +58,22 @@ export class Game {
     this.bike = new Bike();
     this.scene.add(this.bike);
     
-    // Set up the camera
-    this.camera = new THREE.PerspectiveCamera(75, this.width / this.height, 0.1, 1000);
-    this.camera.position.set(0, 5, 10);
-    this.camera.lookAt(this.bike.position);
+    // Set up the camera using camera settings
+    const settings = this.cameraSettings.getInitSettings();
+    this.camera = new THREE.PerspectiveCamera(
+      settings.fov, 
+      this.width / this.height, 
+      settings.near, 
+      settings.far
+    );
+    
+    // Set initial camera position
+    const defaultPos = this.cameraSettings.getDefaultPosition();
+    this.camera.position.set(defaultPos.x, defaultPos.y, defaultPos.z);
+    
+    // Set lookAt point
+    const lookAtPoint = this.cameraSettings.getLookAtPoint(this.bike.position);
+    this.camera.lookAt(new THREE.Vector3(lookAtPoint.x, lookAtPoint.y, lookAtPoint.z));
     
     // Initialize camera controls for debug mode
     this.cameraControls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -272,6 +286,9 @@ export class Game {
       const loadProb = traffic ? traffic.loadingProbability.toFixed(2) : 0;
       const collBoxes = traffic ? traffic.showCollisionBoxes : false;
       
+      // Get camera position for debugging
+      const camPos = this.camera.position;
+      
       // Simplified debug panel with fewer stats
       let debugText = `
         FPS: ${Math.round(1 / Math.max(0.016, frameTime))} <br>
@@ -280,7 +297,8 @@ export class Game {
         Traffic: ${trafficEnabled ? 'ON' : 'OFF'} (${loadProb}) <br>
         Collision Boxes: ${collBoxes ? 'ON' : 'OFF'} <br>
         Debug: ${this.debug ? 'ON' : 'OFF'} <br>
-        Free Cam: ${this.freeCamera ? 'ON' : 'OFF'}
+        Free Cam: ${this.freeCamera ? 'ON' : 'OFF'} <br>
+        Camera: (${camPos.x.toFixed(1)}, ${camPos.y.toFixed(1)}, ${camPos.z.toFixed(1)})
       `;
       
       const statusDiv = this.debugPanel.querySelector('#debug-status');
@@ -302,12 +320,15 @@ export class Game {
     
     const assetManager = AssetManager.getInstance();
     const modelNames = [
+      'bike1.glb',
       'truck1.glb',
       'truck2.glb',
+      'mini_truck1.glb',
       'car1_grey.glb', 
       'car2_blue.glb', 
       'car3_red.glb',
       'car4_white.glb',
+      'car5_taxi.glb',
       'police_car1.glb', 
       'bus1.glb'
     ];
@@ -348,13 +369,10 @@ export class Game {
       // Disable orbit controls
       this.cameraControls.enabled = false;
       
-      // Reset camera position
-      this.camera.position.set(
-        this.bike.position.x,
-        this.bike.position.y + 5,
-        this.bike.position.z + 10
-      );
-      this.camera.lookAt(this.bike.position);
+      // Reset camera position using camera settings
+      const position = this.cameraSettings.getPosition(this.bike.position, this.bike.speed, false);
+      this.camera.position.copy(position);
+      this.camera.lookAt(this.cameraSettings.getLookAtPoint(this.bike.position));
       
       // Remove class from body
       document.body.classList.remove('debug-camera-active');
@@ -378,8 +396,9 @@ export class Game {
     this.bike.currentTilt = 0;
     this.bike.rotation.z = 0;
     
-    // Reset camera
-    this.camera.position.set(0, 5, 10);
+    // Reset camera using camera settings
+    this.camera.position.copy(this.cameraSettings.getDefaultPosition());
+    this.camera.lookAt(this.cameraSettings.getLookAtPoint(this.bike.position));
     
     // Reset traffic system
     if (this.scene.traffic) {
@@ -433,6 +452,9 @@ export class Game {
       return;
     }
     
+    // Base render/visibility distance for performance optimization
+    const renderDistance = 200;
+    
     // Process input state for the bike
     const input = {
       forward: this.inputHandler.isKeyPressed('ArrowUp'),
@@ -446,7 +468,6 @@ export class Game {
     const bikeStatus = this.bike.update(deltaTime, input);
     
     // Calculate render bounds to ensure we're only rendering what's needed
-    const renderDistance = 200; // Reduced from 250 for better performance
     const renderBehind = 50; // Reduced from 100 for better performance
     
     // Update scene (this will update road and traffic)
@@ -479,16 +500,16 @@ export class Game {
     
     // Update camera position if not in free camera mode
     if (!this.freeCamera) {
-      const cameraDistance = 10 + (this.bike.speed / 20); // Reduced camera distance scaling
-      this.camera.position.set(
-        this.bike.position.x,
-        this.bike.position.y + 5,
-        this.bike.position.z + cameraDistance
-      );
-      this.camera.lookAt(this.bike.position);
+      // Get camera position from settings
+      const pos = this.cameraSettings.getPosition(this.bike.position, this.bike.speed, this.debug);
+      this.camera.position.set(pos.x, pos.y, pos.z);
       
-      // Also update camera far plane based on speed for better performance
-      this.camera.far = Math.max(300, renderDistance + this.bike.speed * 10); // Reduced far plane
+      // Get look at point from settings
+      const lookAt = this.cameraSettings.getLookAtPoint(this.bike.position);
+      this.camera.lookAt(new THREE.Vector3(lookAt.x, lookAt.y, lookAt.z));
+      
+      // Update camera far plane based on speed for better performance
+      this.camera.far = Math.max(300, renderDistance + this.bike.speed * 10);
       this.camera.updateProjectionMatrix();
     } else {
       // Update orbit controls
