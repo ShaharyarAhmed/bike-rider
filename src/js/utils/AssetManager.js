@@ -26,15 +26,18 @@ export class AssetManager {
     
     // Vehicle model configuration for probability-based loading
     this.vehicleModels = {
+      'truck1.glb': { probability: 0.7, enabled: true },
       // 'truck2.glb': { probability: 0.3, enabled: true },
-      // 'truck1.glb': { probability: 0.7, enabled: true },
-      // 'bus1.glb': { probability: 0.1, enabled: true },
+      // 'mini_truck1.glb': { probability: 0.3, enabled: true },
+      'bus1.glb': { probability: 0.1, enabled: true },
       'bus2.glb': { probability: 0.1, enabled: true },
-      // 'car2_blue.glb': { probability: 0.2, enabled: true },
-      // 'car1_grey.glb': { probability: 0.2, enabled: true },
-      // 'car4_white.glb': { probability: 0.2, enabled: true },
-      // 'car3_red.glb': { probability: 0.2, enabled: true },
-      // 'police_car1.glb': { probability: 0.1, enabled: true }
+      'car1_grey.glb': { probability: 0.2, enabled: true },
+      'car2_blue.glb': { probability: 0.2, enabled: true },
+      'car3_red.glb': { probability: 0.2, enabled: true },
+      'car4_white.glb': { probability: 0.2, enabled: true },
+      // 'car5_taxi.glb': { probability: 0.2, enabled: true },
+      'police_car1.glb': { probability: 0.1, enabled: true },
+      'bike1.glb': { probability: 1.0, enabled: true }
     };
     
     // Listen for model config updates from Traffic
@@ -65,18 +68,27 @@ export class AssetManager {
   
   // Get a list of enabled vehicle models for a specific type
   getEnabledModels(type) {
-    const truckModels = ['truck1.glb', 'truck2.glb'];
+    const truckModels = ['truck1.glb', 'truck2.glb', 'mini_truck1.glb'];
     const carModels = [
       'car1_grey.glb', 
       'car2_blue.glb', 
       'car3_red.glb',
       'car4_white.glb',
+      'car5_taxi.glb',
       'police_car1.glb', 
       'bus1.glb',
       'bus2.glb'
     ];
+    const bikeModels = ['bike1.glb'];
     
-    const modelList = type === 'truck' ? truckModels : carModels;
+    let modelList;
+    if (type === 'truck') {
+      modelList = truckModels;
+    } else if (type === 'bike') {
+      modelList = bikeModels;
+    } else {
+      modelList = carModels;
+    }
     
     return modelList.filter(model => 
       this.vehicleModels[model] && 

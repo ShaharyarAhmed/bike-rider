@@ -191,7 +191,7 @@ export class Vehicle extends THREE.Object3D {
         rotation: { y: Math.PI / 2 },
         position: { x: 0, y: 0, z: 0 },
         probability: 0.3, // 30% chance for truck2
-        enabled: false
+        enabled: true
       },
       {
         modelName: 'truck1.glb', 
@@ -199,7 +199,16 @@ export class Vehicle extends THREE.Object3D {
         scale: { x: 1.3, y: 1.3, z: 1.3 },
         rotation: { y: 0 },
         position: { x: 0, y: 0, z: 0 },
-        probability: 0.1, // 70% chance for truck1
+        probability: 0.7, // 70% chance for truck1
+        enabled: true
+      },
+      {
+        modelName: 'mini_truck1.glb',
+        type: 'truck',
+        scale: { x: 1.0, y: 1.0, z: 1.0 },
+        rotation: { y: Math.PI },
+        position: { x: 0, y: 0, z: 0 },
+        probability: 0.3, // 30% chance for mini truck
         enabled: true
       },
       {
@@ -208,7 +217,7 @@ export class Vehicle extends THREE.Object3D {
         scale: { x: 0.08, y: 0.08, z: 0.08 },
         rotation: { y: THREE.MathUtils.degToRad(0) },
         position: { x: 0, y: 0, z: 0 },
-        probability: 1, // 10% chance for bus
+        probability: 0.1, // 10% chance for bus1
         enabled: true
       },
       {
@@ -217,7 +226,7 @@ export class Vehicle extends THREE.Object3D {
         scale: { x: 1, y: 1, z: 1 },
         rotation: { y: THREE.MathUtils.degToRad(0) },
         position: { x: 0, y: 1, z: 0 },
-        probability: 1, // 10% chance for bus
+        probability: 0.1, // 10% chance for bus2
         enabled: true
       },
       {
@@ -257,12 +266,30 @@ export class Vehicle extends THREE.Object3D {
         enabled: true
       },
       {
+        modelName: 'car5_taxi.glb',
+        type: 'car',
+        scale: { x: 1.2, y: 1.2, z: 1.2 },
+        rotation: { y: THREE.MathUtils.degToRad(0) },
+        position: { x: 0, y: 0, z: 0 },
+        probability: 0.2, // 20% chance for taxi
+        enabled: true
+      },
+      {
         modelName: 'police_car1.glb',
         type: 'car',
         scale: { x: 1, y: 1, z: 1 },
         rotation: { y: 0 },
         position: { x: 0, y: 0, z: 0 },
         probability: 0.1, // 10% chance for police car
+        enabled: true
+      },
+      {
+        modelName: 'bike1.glb',
+        type: 'bike',
+        scale: { x: 0.2, y: 0.2, z: 0.2 },
+        rotation: { y: Math.PI },
+        position: { x: 0, y: 0, z: 0 },
+        probability: 1.0, // 100% chance for bike
         enabled: true
       }
     ];
@@ -286,13 +313,6 @@ export class Vehicle extends THREE.Object3D {
       config.position.y || 0,
       config.position.z || 0
     );
-    
-    // // Position based on type
-    // if (this.type === 'truck') {
-    //   model.position.y = 0;
-    // } else {
-    //   model.position.y = 0;
-    // }
     
     // Mark this as a model
     model.userData.isModel = true;

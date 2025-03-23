@@ -28,18 +28,70 @@ export class Bike extends THREE.Object3D {
   }
   
   createBike() {
-    // Simple rectangle for the bike
+    // Create a temporary placeholder while the model loads
     const geometry = new THREE.BoxGeometry(1, 1, 2);
     const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-    const bikeMesh = new THREE.Mesh(geometry, material);
+    const placeholder = new THREE.Mesh(geometry, material);
+    placeholder.castShadow = true;
+    this.add(placeholder);
+    this.placeholder = placeholder;
     
-    // Set bike to cast shadow
-    bikeMesh.castShadow = true;
+    // Get AssetManager instance
+    const assetManager = AssetManager.getInstance();
     
-    // Add bike mesh to this object
-    this.add(bikeMesh);
+    if (!assetManager) {
+      console.error("AssetManager instance not available");
+      return;
+    }
     
-    console.log("Simple bike model created");
+    // Load the bike model
+    try {
+      assetManager.loadModel(
+        'bike1.glb',
+        (model) => this.onBikeModelLoaded(model),
+        (error) => {
+          console.error(`Failed to load bike model: ${error.message}`);
+          // Keep the placeholder if model loading fails
+        }
+      );
+    } catch (error) {
+      console.error("Error loading bike model:", error);
+    }
+    
+    console.log("Loading bike model...");
+  }
+  
+  // Handle model loaded
+  onBikeModelLoaded(model) {
+    console.log(`Bike model loaded`);
+    
+    // Remove placeholder
+    if (this.placeholder) {
+      this.remove(this.placeholder);
+      this.placeholder = null;
+    }
+    
+    // Configure the bike model
+    model.scale.set(0.02, 0.02, 0.02); // Adjust scale as needed
+    model.position.set(0, -0.5, 0); // Adjust position as needed
+    // model.rotation.y = Math.PI; // Face forward
+    
+    // Set the model to cast shadow
+    model.traverse(child => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+    
+    // Mark as model
+    model.userData.isModel = true;
+    
+    // Add to the bike
+    this.add(model);
+    this.model = model;
+    
+    console.log("Bike model added to scene");
   }
   
   // Toggle debug visualization for the bike
