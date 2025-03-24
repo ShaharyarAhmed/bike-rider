@@ -43,8 +43,8 @@ export class GameScene extends THREE.Scene {
     const skylineTexture = textureLoader.load('/src/assets/bg2.png');
     
     // Create a large wall/plane far in the distance, make it wider and taller for better visibility
-    const skylineWidth = 1000; // Increased width
-    const skylineHeight = 500; // Increased height
+    const skylineWidth = 950; // Increased width
+    const skylineHeight = 250; // Increased height
     const skylineGeometry = new THREE.PlaneGeometry(skylineWidth, skylineHeight);
     
     // Create material with the skyline texture
@@ -59,16 +59,17 @@ export class GameScene extends THREE.Scene {
     // Create the skyline mesh
     const skylineWall = new THREE.Mesh(skylineGeometry, skylineMaterial);
     
-    // Position the wall far away, but not too far to be seen
-    // Position higher up for better visibility and rotate to face the camera
-    skylineWall.position.set(0, 20, -300); 
+    // Position the wall at the initial distance from the starting point (0,0,0)
+    // Bike starts at z=0, so place wall 300 units ahead
+    const initialDistanceFromBike = 300;
+    skylineWall.position.set(0, 20, -initialDistanceFromBike); 
     skylineWall.rotation.y = Math.PI; // Rotate to face the camera/player
     
     // Add the skyline wall to the scene
     skylineWall.name = "distant-skyline";
     this.add(skylineWall);
     
-    // Store reference for potential updates
+    // Store reference for updates
     this.skylineWall = skylineWall;
     
     console.log("Distant skyline wall created at position:", skylineWall.position);
@@ -136,6 +137,18 @@ export class GameScene extends THREE.Scene {
     // Update traffic
     if (this.traffic) {
       this.traffic.update(deltaTime, bikePosition);
+    }
+    
+    // Update skyline wall position to maintain constant distance from bike
+    if (this.skylineWall) {
+      // Keep the wall 300 units ahead of the bike
+      const distanceFromBike = 300;
+      this.skylineWall.position.z = bikePosition.z - distanceFromBike;
+      
+      // Log wall position for debugging (only every 1000 units to avoid console spam)
+      if (Math.floor(this.totalDistanceTraveled / 1000) > Math.floor((this.totalDistanceTraveled - distanceDelta) / 1000)) {
+        console.log(`Skyline wall position updated to: ${this.skylineWall.position.z.toFixed(2)}, bike at: ${bikePosition.z.toFixed(2)}`);
+      }
     }
     
     // Make sure fog is properly adjusted for visibility
