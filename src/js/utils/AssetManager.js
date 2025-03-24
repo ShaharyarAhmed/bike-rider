@@ -40,9 +40,28 @@ export class AssetManager {
       'bike1.glb': { probability: 1.0, enabled: true }
     };
     
+    // Tree model configuration for probability-based loading
+    this.treeModels = {
+      'tree1.glb': { probability: 0.25, enabled: true },
+      'tree2.glb': { probability: 0.25, enabled: true },
+      'tree3.glb': { probability: 0.25, enabled: true },
+      'tree4.glb': { probability: 0.25, enabled: true },
+      'tree_trunk1.glb': { probability: 0.4, enabled: true },
+      'tree_trunk2.glb': { probability: 0.4, enabled: true }
+    };
+    
     // Listen for model config updates from Traffic
     document.addEventListener('vehicleModelConfigUpdate', (event) => {
       this.updateModelProbability(
+        event.detail.modelName, 
+        event.detail.probability, 
+        event.detail.enabled
+      );
+    });
+    
+    // Listen for model config updates from Environment
+    document.addEventListener('treeModelConfigUpdate', (event) => {
+      this.updateTreeModelProbability(
         event.detail.modelName, 
         event.detail.probability, 
         event.detail.enabled
@@ -68,56 +87,84 @@ export class AssetManager {
   
   // Get a list of enabled vehicle models for a specific type
   getEnabledModels(type) {
-    const truckModels = ['truck1.glb', 'truck2.glb', 'mini_truck1.glb'];
-    const carModels = [
-      'car1_grey.glb', 
-      'car2_blue.glb', 
-      'car3_red.glb',
-      'car4_white.glb',
-      'car5_taxi.glb',
-      'police_car1.glb', 
-      'bus1.glb',
-      'bus2.glb'
-    ];
-    const bikeModels = ['bike1.glb'];
-    
-    let modelList;
-    if (type === 'truck') {
-      modelList = truckModels;
-    } else if (type === 'bike') {
-      modelList = bikeModels;
-    } else {
-      modelList = carModels;
+    // For backward compatibility with old Vehicle code
+    if (type === 'car' || type === 'truck' || type === 'bike') {
+      const truckModels = ['truck1.glb', 'truck2.glb', 'mini_truck1.glb'];
+      const carModels = [
+        'car1_grey.glb', 
+        'car2_blue.glb', 
+        'car3_red.glb',
+        'car4_white.glb',
+        'car5_taxi.glb',
+        'police_car1.glb', 
+        'bus1.glb',
+        'bus2.glb'
+      ];
+      const bikeModels = ['bike1.glb'];
+      
+      let modelList;
+      if (type === 'truck') {
+        modelList = truckModels;
+      } else if (type === 'bike') {
+        modelList = bikeModels;
+      } else {
+        modelList = carModels;
+      }
+      
+      return modelList.filter(model => 
+        this.vehicleModels[model] && 
+        this.vehicleModels[model].enabled && 
+        this.vehicleModels[model].probability > 0
+      );
     }
     
-    return modelList.filter(model => 
-      this.vehicleModels[model] && 
-      this.vehicleModels[model].enabled && 
-      this.vehicleModels[model].probability > 0
-    );
+    // For Environment trees and other new components
+    const modelConfig = type === 'tree' ? this.treeModels : this.vehicleModels;
+    const enabledModels = [];
+    
+    for (const [modelName, config] of Object.entries(modelConfig)) {
+      if (config.enabled) {
+        enabledModels.push({
+          name: modelName,
+          probability: config.probability
+        });
+      }
+    }
+    
+    if (this.debugMode) {
+      console.log(`AssetManager: Enabled ${type} models:`, enabledModels);
+    }
+    
+    return enabledModels;
   }
   
   // Method to update model probability configuration
   updateModelProbability(modelName, probability, enabled = true) {
     if (this.vehicleModels[modelName]) {
-      this.vehicleModels[modelName].probability = Math.max(0, Math.min(1, probability));
-      this.vehicleModels[modelName].enabled = enabled;
-      
       if (this.debugMode) {
-        console.log(`AssetManager: Updated ${modelName} - probability: ${probability}, enabled: ${enabled}`);
+        console.log(`AssetManager: Updated model ${modelName} - probability: ${probability}, enabled: ${enabled}`);
       }
-      return true;
+      this.vehicleModels[modelName].probability = probability;
+      this.vehicleModels[modelName].enabled = enabled;
     }
-    return false;
+  }
+  
+  updateTreeModelProbability(modelName, probability, enabled = true) {
+    if (this.treeModels[modelName]) {
+      if (this.debugMode) {
+        console.log(`AssetManager: Updated tree model ${modelName} - probability: ${probability}, enabled: ${enabled}`);
+      }
+      this.treeModels[modelName].probability = probability;
+      this.treeModels[modelName].enabled = enabled;
+    }
   }
   
   // Method to get model probability settings
   getModelProbability(modelName) {
     if (this.vehicleModels[modelName]) {
-      return {
-        probability: this.vehicleModels[modelName].probability,
-        enabled: this.vehicleModels[modelName].enabled
-      };
+      return this.vehicleModels[modelName];
+    } else if (this.treeModels[modelName]) {
+      return this.treeModels[modelName];
     }
     return { probability: 0, enabled: false };
   }

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Road } from '../components/Road.js';
 import { Traffic } from '../components/Traffic.js';
+import { Environment } from '../components/Environment.js';
 
 export class GameScene extends THREE.Scene {
   constructor() {
@@ -18,6 +19,9 @@ export class GameScene extends THREE.Scene {
     // Create the road and pass this scene
     this.road = new Road(this);
     
+    // Add environment with land and trees
+    this.environment = new Environment(this);
+    
     // Add traffic system - pass 'this' as the scene
     this.traffic = new Traffic(this);
     
@@ -29,12 +33,12 @@ export class GameScene extends THREE.Scene {
   }
   
   setupLights() {
-    // Ambient light for overall scene illumination - slightly increased to compensate for fewer lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    // Ambient light for overall scene illumination - increased for better tree visibility
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
     this.add(ambientLight);
     
     // Directional light (sunlight) with optimized shadow settings
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8); // Reduced intensity
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0); // Increased intensity
     directionalLight.position.set(10, 20, 10);
     
     // Enable shadows but with optimized settings
@@ -52,6 +56,11 @@ export class GameScene extends THREE.Scene {
     directionalLight.shadow.bias = -0.0005;
     
     this.add(directionalLight);
+    
+    // Add a second directional light from the opposite direction to reduce shadows
+    const secondaryLight = new THREE.DirectionalLight(0xffffcc, 0.6); 
+    secondaryLight.position.set(-10, 15, -10);
+    this.add(secondaryLight);
     
     // Add a helper function to adjust fog based on performance
     this.adjustFogForPerformance = (deltaTime) => {
@@ -77,6 +86,11 @@ export class GameScene extends THREE.Scene {
       this.road.update(bikePosition);
     }
     
+    // Update environment
+    if (this.environment) {
+      this.environment.update(bikePosition);
+    }
+    
     // Update traffic
     if (this.traffic) {
       this.traffic.update(deltaTime, bikePosition);
@@ -97,6 +111,16 @@ export class GameScene extends THREE.Scene {
     
     // Store current position for next update
     this.lastUpdatePosition.copy(bikePosition);
+  }
+  
+  // Toggle environment debug mode
+  toggleEnvironmentDebug() {
+    if (this.environment) {
+      const newDebugState = !this.environment.debug;
+      this.environment.setDebugMode(newDebugState);
+      return newDebugState;
+    }
+    return false;
   }
   
   // Check for collisions with traffic

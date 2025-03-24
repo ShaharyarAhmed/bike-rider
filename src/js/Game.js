@@ -117,6 +117,14 @@ export class Game {
         }
       }
       
+      // Toggle environment debug mode with 'E' key
+      if (e.key === 'e' || e.key === 'E') {
+        if (this.scene && this.scene.environment) {
+          const isDebug = this.scene.toggleEnvironmentDebug();
+          console.log(`Environment debug mode: ${isDebug ? 'ON' : 'OFF'}`);
+        }
+      }
+      
       // Toggle collision boxes with 'B' key
       if (e.key === 'b' || e.key === 'B') {
         if (this.scene && this.scene.traffic) {
