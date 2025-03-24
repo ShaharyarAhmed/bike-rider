@@ -10,8 +10,8 @@ export class Road {
       this.width = 14;       // Increased from 10 to 14 for wider three-lane road
     } else {
       // First parameter is chunk length (old style)
-      this.chunkLength = sceneOrChunkLength || 100;
-      this.width = width || 14; // Increased default width
+      this.chunkLength = 100;
+      this.width = 14; // Increased default width
     }
     
     this.chunks = [];
@@ -194,7 +194,7 @@ export class Road {
   update(bikePosition) {
     // Check if we need to generate a new chunk
     // If bike has passed the middle of the current active chunk
-    const activeTriggerPoint = this.chunks[this.activeChunkIndex].position - this.chunkLength / 2;
+    const activeTriggerPoint = this.chunks[this.activeChunkIndex].position - this.chunkLength / 50;
     
     if (bikePosition.z < activeTriggerPoint) {
       // Track road progress
