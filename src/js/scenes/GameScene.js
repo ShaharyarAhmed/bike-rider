@@ -7,11 +7,15 @@ export class GameScene extends THREE.Scene {
   constructor() {
     super();
     
-    // Set up background
-    this.background = new THREE.Color(0x87CEEB); // Sky blue
+    // Set background color to a sky blue
+    this.background = new THREE.Color(0x87CEEB);
+    
+    // Add distant skyline wall
+    this.setupDistantSkyline();
     
     // Add fog for distance culling and atmospheric effect
-    this.fog = new THREE.Fog(0x87CEEB, 50, 200); // Increased fog distance for better visibility
+    // Increase the fog distance to make distant objects more visible
+    // this.fog = new THREE.Fog(0x87CEEB, 500, 2000);
     
     // Add lighting
     this.setupLights();
@@ -30,6 +34,44 @@ export class GameScene extends THREE.Scene {
     
     // Distance tracking
     this.totalDistanceTraveled = 0;
+  }
+  
+  // Set up distant skyline wall
+  setupDistantSkyline() {
+    // Load the skyline image texture
+    const textureLoader = new THREE.TextureLoader();
+    const skylineTexture = textureLoader.load('/src/assets/bg2.png');
+    
+    // Create a large wall/plane far in the distance, make it wider and taller for better visibility
+    const skylineWidth = 1000; // Increased width
+    const skylineHeight = 500; // Increased height
+    const skylineGeometry = new THREE.PlaneGeometry(skylineWidth, skylineHeight);
+    
+    // Create material with the skyline texture
+    const skylineMaterial = new THREE.MeshBasicMaterial({
+      map: skylineTexture,
+      side: THREE.DoubleSide, // Make the wall visible from both sides
+      transparent: true, // Enable transparency
+      opacity: 1.0,
+      depthWrite: false // Prevent z-fighting
+    });
+    
+    // Create the skyline mesh
+    const skylineWall = new THREE.Mesh(skylineGeometry, skylineMaterial);
+    
+    // Position the wall far away, but not too far to be seen
+    // Position higher up for better visibility and rotate to face the camera
+    skylineWall.position.set(0, 20, -300); 
+    skylineWall.rotation.y = Math.PI; // Rotate to face the camera/player
+    
+    // Add the skyline wall to the scene
+    skylineWall.name = "distant-skyline";
+    this.add(skylineWall);
+    
+    // Store reference for potential updates
+    this.skylineWall = skylineWall;
+    
+    console.log("Distant skyline wall created at position:", skylineWall.position);
   }
   
   setupLights() {
@@ -66,11 +108,11 @@ export class GameScene extends THREE.Scene {
     this.adjustFogForPerformance = (deltaTime) => {
       // If frames are taking too long (lag), reduce fog distance
       if (deltaTime > 0.05) { // Less than 20 FPS
-        this.fog.far = Math.max(150, this.fog.far - 5);
+        this.fog.far = Math.max(1500, this.fog.far - 100);
       } 
       // If performance is good, gradually increase fog distance to default
-      else if (deltaTime < 0.033 && this.fog.far < 200) {
-        this.fog.far = Math.min(200, this.fog.far + 1);
+      else if (deltaTime < 0.033 && this.fog.far < 2000) {
+        this.fog.far = Math.min(2000, this.fog.far + 20);
       }
     };
   }
@@ -96,8 +138,8 @@ export class GameScene extends THREE.Scene {
       this.traffic.update(deltaTime, bikePosition);
     }
     
-    // Adjust fog based on current performance
-    this.adjustFogForPerformance(deltaTime);
+    // Make sure fog is properly adjusted for visibility
+    // this.adjustFogForPerformance(deltaTime);
     
     // Log distance milestone every 1000 units instead of 500 for better performance
     if (Math.floor(this.totalDistanceTraveled / 1000) > Math.floor((this.totalDistanceTraveled - distanceDelta) / 1000)) {
