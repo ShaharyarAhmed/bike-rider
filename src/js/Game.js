@@ -427,34 +427,22 @@ export class Game {
     this.bike.currentTilt = 0;
     this.bike.rotation.z = 0;
     
+    // Create a new GameScene to ensure clean state
+    const oldScene = this.scene;
+    this.scene = new GameScene();
+    
+    // Move bike to new scene
+    oldScene.remove(this.bike);
+    this.scene.add(this.bike);
+    
     // Reset camera using camera settings
     this.camera.position.copy(this.cameraSettings.getDefaultPosition());
     this.camera.lookAt(this.cameraSettings.getLookAtPoint(this.bike.position));
     
-    // Reset traffic system
-    if (this.scene.traffic) {
-      // Remove all existing vehicles
-      while (this.scene.traffic.vehicles.length > 0) {
-        const vehicle = this.scene.traffic.vehicles.pop();
-        this.scene.remove(vehicle);
-      }
-      
-      // Reset traffic properties
-      this.scene.traffic.spawnTimer = 0; // Trigger immediate spawn on next update
-      
-      console.log("Traffic system reset");
-    }
-    
-    // Reset road tracking
-    if (this.scene.road) {
-      this.scene.road.totalRoadDistance = 0;
-      console.log("Road system reset");
-    }
-    
-    // Reset scene tracking
-    if (this.scene.lastUpdatePosition) {
-      this.scene.lastUpdatePosition.set(0, 0, 0);
-      this.scene.totalDistanceTraveled = 0;
+    // Reset camera controls if in debug mode
+    if (this.cameraControls) {
+      this.cameraControls.target.copy(this.bike.position);
+      this.cameraControls.update();
     }
     
     // Ensure keyboard controls are reset
@@ -466,7 +454,16 @@ export class Game {
       Space: false
     };
     
-    console.log("Game restarted");
+    // Clear any pending animations
+    if (this.modelNotificationTimeout) {
+      clearTimeout(this.modelNotificationTimeout);
+    }
+    
+    // Reset score displays
+    document.getElementById('distance').textContent = '0';
+    document.getElementById('speed').textContent = '0';
+    
+    console.log("Game restarted with fresh scene");
   }
 
   onWindowResize() {
