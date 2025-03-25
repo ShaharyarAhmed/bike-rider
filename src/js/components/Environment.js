@@ -35,10 +35,14 @@ export class Environment {
     
     // The farthest distance we've generated trees and land
     this.farthestZ = 0;
-    this.totalLandSegments = 12; // Tripled from 4 to maintain more segments (3x)
+    this.totalLandSegments = 40; // Doubled to maintain much more segments
     
-    // Distance behind player to clean up objects - increased to prevent memory issues
-    this.cleanupDistance = 300; // Doubled from 150 for proper cleanup with extended generation
+    // Distance behind player to clean up objects
+    this.cleanupDistance = 1000; // Doubled for better cleanup coordination
+    
+    // Generation distances
+    this.maxGenerationDistance = 12000; // Doubled for much further generation
+    this.triggerDistance = 4.0; // Increased for much earlier land generation
     
     // Debug
     this.debug = false;
@@ -320,22 +324,12 @@ export class Environment {
   
   // Generate trees for a given road segment
   generateTrees(bikePosition, startZ, endZ) {
-    // Define the zones for tree placement
-    const leftZoneStart = -this.roadWidth / 2 - this.roadBuffer;
-    const leftZoneEnd = leftZoneStart - this.treeZoneWidth;
-    
-    const rightZoneStart = this.roadWidth / 2 + this.roadBuffer;
-    const rightZoneEnd = rightZoneStart + this.treeZoneWidth;
-    
     // Place trees only if they're not too far from the player
-    const maxGenerationDistance = 4500; // Tripled from 1500 to generate trees much further ahead (3x)
-    
-    // Calculate distance to player
     const distanceToStart = Math.abs(bikePosition.z - startZ);
     const distanceToEnd = Math.abs(bikePosition.z - endZ);
     
     // Skip if zone is too far from player
-    if (distanceToStart > maxGenerationDistance && distanceToEnd > maxGenerationDistance) {
+    if (distanceToStart > this.maxGenerationDistance && distanceToEnd > this.maxGenerationDistance) {
       if (this.updateCounter % 60 === 0) { // Reduce log frequency
         console.log(`Skipping tree generation - too far from player: ${Math.min(distanceToStart, distanceToEnd).toFixed(1)} units`);
       }
@@ -361,15 +355,16 @@ export class Environment {
     const xStep = this.treeSpacing;
     
     let treesPlaced = 0;
+    const maxTreesPerZone = 100; // Limit trees per zone for performance
     
     // Left side trees
-    for (let z = startZ; z < endZ; z += zStep) {
+    for (let z = startZ; z < endZ && treesPlaced < maxTreesPerZone; z += zStep) {
       const zOffset = (Math.random() - 0.5) * this.treeSpacing * 0.5;
       const currentZ = z + zOffset;
       
       // Place trees in rows on left side
-      for (let row = 0; row < this.treeRows; row++) {
-        const rowX = leftZoneStart - (row * xStep) - (Math.random() * xStep * 0.5);
+      for (let row = 0; row < this.treeRows && treesPlaced < maxTreesPerZone; row++) {
+        const rowX = -this.roadWidth / 2 - this.roadBuffer - (row * xStep) - (Math.random() * xStep * 0.5);
         
         // Only place a tree with certain probability (density)
         if (Math.random() < this.treeDensity) {
@@ -379,8 +374,8 @@ export class Environment {
       }
       
       // Place trees in rows on right side
-      for (let row = 0; row < this.treeRows; row++) {
-        const rowX = rightZoneStart + (row * xStep) + (Math.random() * xStep * 0.5);
+      for (let row = 0; row < this.treeRows && treesPlaced < maxTreesPerZone; row++) {
+        const rowX = this.roadWidth / 2 + this.roadBuffer + (row * xStep) + (Math.random() * xStep * 0.5);
         
         // Only place a tree with certain probability (density)
         if (Math.random() < this.treeDensity) {
@@ -430,8 +425,7 @@ export class Environment {
     const frontSegment = this.landSegments[0];
     
     // Calculate the trigger point - when bike passes this z-coordinate, create a new segment
-    // Increased to 1.5 (150%) to regenerate land much earlier - creates new segments when player is far back
-    const triggerPoint = frontSegment.zPosition - this.landLength * 1.5;
+    const triggerPoint = frontSegment.zPosition - this.landLength * this.triggerDistance;
     
     // Debug log segment positions - less frequently
     if (this.updateCounter % 120 === 0) { // Reduced logging frequency
@@ -439,16 +433,22 @@ export class Environment {
     }
     
     // Check if player has moved past the trigger point (remember: negative Z is forward)
-    if (bikePosition.z < triggerPoint) {
-      // Create a new segment at the front (further in negative Z)
-      const newPosition = frontSegment.zPosition - this.landLength;
-      console.log(`CREATING NEW LAND SEGMENT at z=${newPosition}, player at z=${bikePosition.z.toFixed(1)}`);
+    // OR if we have fewer segments than our target
+    if (bikePosition.z < triggerPoint || this.landSegments.length < this.totalLandSegments) {
+      // Create multiple segments ahead if needed - more aggressive segment creation
+      const segmentsToCreate = Math.min(5, Math.max(3, this.totalLandSegments - this.landSegments.length));
       
-      // Create the new segment
-      const newSegment = this.createLandSegment(newPosition);
+      for (let i = 0; i < segmentsToCreate; i++) {
+        // Create a new segment at the front (further in negative Z)
+        const newPosition = frontSegment.zPosition - (this.landLength * (i + 1));
+        console.log(`CREATING NEW LAND SEGMENT at z=${newPosition}, player at z=${bikePosition.z.toFixed(1)}`);
+        
+        // Create the new segment
+        this.createLandSegment(newPosition);
+      }
       
-      // Remove the last segment if we have more than we need
-      if (this.landSegments.length > this.totalLandSegments) {
+      // Remove excess segments from the back, but keep a buffer
+      while (this.landSegments.length > this.totalLandSegments + 2) {
         // Get the rearmost segment (after sorting, it's the last in the array)
         const lastSegment = this.landSegments.pop();
         if (lastSegment) {
@@ -483,11 +483,13 @@ export class Environment {
         this.trees.splice(index, 1);
       }
       
-      console.log(`Cleaned up ${treesToRemove.length} trees behind the player. Current count: ${this.trees.length}`);
+      if (this.updateCounter % 120 === 0) { // Reduce log frequency
+        console.log(`Cleaned up ${treesToRemove.length} trees behind the player. Current count: ${this.trees.length}`);
+      }
     }
     
     // DON'T remove populated zones that are too far behind the player
-    // Instead, only clear zones that are VERY far behind (twice the cleanup distance)
+    // Instead, only clear zones that are VERY far behind (three times the cleanup distance)
     const zonesToRemove = [];
     for (const zoneKey of this.populatedZones) {
       if (zoneKey.startsWith('segment_')) {
@@ -495,7 +497,7 @@ export class Environment {
         const zoneZ = segmentIndex * this.landLength;
         
         // Only remove zones that are very far behind
-        if (zoneZ > playerZ + (this.cleanupDistance * 2)) {
+        if (zoneZ > playerZ + (this.cleanupDistance * 3)) {
           zonesToRemove.push(zoneKey);
         }
       }
@@ -506,7 +508,7 @@ export class Environment {
       this.populatedZones.delete(zoneKey);
     }
     
-    if (zonesToRemove.length > 0) {
+    if (zonesToRemove.length > 0 && this.updateCounter % 120 === 0) { // Reduce log frequency
       console.log(`Cleared ${zonesToRemove.length} old populated zones`);
     }
   }
