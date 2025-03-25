@@ -9,9 +9,42 @@
 <body>
   <div id="game-container">
     <div id="info">
-      <p>Use arrow keys to control the bike:<br>
-        ↑ = Accelerate, ↓ = Brake, ← = Left, → = Right<br>
-        <span style="color: yellow;">Watch out for traffic! Avoid hitting cars and trucks.</span></p>
+      <p>Use the following keys to control the bike:</p>
+      <p>
+        <span class="key">↑</span> Accelerate
+        <span class="key">↓</span> Brake
+        <span class="key">←</span> Left
+        <span class="key">→</span> Right
+      </p>
+      <span class="warning">⚠️ Watch out for traffic! Avoid hitting cars and trucks.</span>
+    </div>
+    <div id="score">
+      <div>
+        <span class="label">Distance</span>
+        <span class="value"><span id="distance">0</span>m</span>
+      </div>
+      <div>
+        <span class="label">Speed</span>
+        <span class="value"><span id="speed">0</span>km/h</span>
+      </div>
+      <div class="top-score">
+        <span class="label">Top Score</span>
+        <span class="value"><span id="top-score-display">0</span>m</span>
+      </div>
+    </div>
+    <div id="game-over">
+      <h1>💥 Game Over!</h1>
+      <div class="stats">
+        <div>
+          <span class="label">Distance Traveled</span>
+          <span class="value"><span id="final-distance">0</span>m</span>
+        </div>
+        <div>
+          <span class="label">Top Speed</span>
+          <span class="value"><span id="top-speed">0</span>km/h</span>
+        </div>
+      </div>
+      <button id="restart-button">Play Again 🏍️</button>
     </div>
   </div>
   <script type="module" src="src/js/main.js"></script>

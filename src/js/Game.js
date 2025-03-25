@@ -28,6 +28,13 @@ export class Game {
     this.freeCamera = false;
     this.cameraControls = null;
     this.debugPanel = null;
+    this.topSpeed = 0;
+    this.gameStarted = false;
+    
+    // Load top score from localStorage
+    this.topScore = parseInt(localStorage.getItem('bikeRiderTopScore')) || 0;
+    // Update top score display
+    this.updateTopScoreDisplay();
   }
 
   init() {
@@ -93,6 +100,16 @@ export class Game {
     
     // Create debug panel
     this.createDebugPanel();
+
+    // Add input listener to hide instructions when game starts
+    window.addEventListener('keydown', (e) => {
+      if (!this.gameStarted && 
+          (e.key === 'ArrowUp' || e.key === 'ArrowDown' || 
+           e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        this.gameStarted = true;
+        document.getElementById('info').classList.add('hidden');
+      }
+    });
   }
 
   setupKeyboardControls() {
@@ -392,15 +409,21 @@ export class Game {
   }
   
   restartGame() {
-    // Hide game over message
-    this.gameOverElement.style.display = 'none';
+    // Hide game over screen
+    document.getElementById('game-over').style.display = 'none';
     
     // Reset game state
     this.gameOver = false;
+    this.topSpeed = 0;
+    this.gameStarted = false;
+    
+    // Show instructions again
+    const infoElement = document.getElementById('info');
+    infoElement.classList.remove('hidden');
     
     // Reset bike position and speed
     this.bike.position.set(0, 0.5, 0);
-    this.bike.speed = 5; // Use initial speed value from Bike class
+    this.bike.speed = 5;
     this.bike.currentTilt = 0;
     this.bike.rotation.z = 0;
     
@@ -455,7 +478,6 @@ export class Game {
   }
 
   update(deltaTime) {
-    // Don't update if game is over
     if (this.gameOver) {
       return;
     }
@@ -474,6 +496,29 @@ export class Game {
     
     // Update bike with the processed input
     const bikeStatus = this.bike.update(deltaTime, input);
+    
+    // Track top speed
+    this.topSpeed = Math.max(this.topSpeed, this.bike.speed);
+    
+    // Update score display
+    const distanceElement = document.getElementById('distance');
+    const speedElement = document.getElementById('speed');
+    if (distanceElement && speedElement) {
+      // Convert total distance to meters (rounded to nearest meter)
+      const distanceInMeters = Math.round(this.scene.totalDistanceTraveled);
+      // Convert speed to km/h (rounded to nearest km/h)
+      const speedInKmh = Math.round(this.bike.speed * 3.6); // Convert m/s to km/h
+      
+      distanceElement.textContent = distanceInMeters.toLocaleString();
+      speedElement.textContent = speedInKmh.toLocaleString();
+      
+      // Check for new top score during gameplay
+      if (distanceInMeters > this.topScore) {
+        this.topScore = distanceInMeters;
+        localStorage.setItem('bikeRiderTopScore', this.topScore.toString());
+        this.updateTopScoreDisplay();
+      }
+    }
     
     // Calculate render bounds to ensure we're only rendering what's needed
     const renderBehind = 50; // Reduced from 100 for better performance
@@ -538,7 +583,25 @@ export class Game {
   
   handleCrash() {
     this.gameOver = true;
-    this.gameOverElement.style.display = 'block';
+    
+    // Update final stats
+    const finalDistance = Math.round(this.scene.totalDistanceTraveled);
+    const topSpeedKmh = Math.round(this.topSpeed * 3.6);
+    
+    // Check if this is a new top score
+    if (finalDistance > this.topScore) {
+      this.topScore = finalDistance;
+      localStorage.setItem('bikeRiderTopScore', this.topScore.toString());
+      this.updateTopScoreDisplay();
+    }
+    
+    document.getElementById('final-distance').textContent = finalDistance.toLocaleString();
+    document.getElementById('top-speed').textContent = topSpeedKmh.toLocaleString();
+    
+    // Show game over screen with a slight delay for better UX
+    setTimeout(() => {
+      document.getElementById('game-over').style.display = 'block';
+    }, 500);
   }
 
   animate() {
@@ -627,5 +690,13 @@ export class Game {
     this.modelNotificationTimeout = setTimeout(() => {
       notificationEl.style.display = 'none';
     }, 3000);
+  }
+
+  // Add method to update top score display
+  updateTopScoreDisplay() {
+    const topScoreElement = document.getElementById('top-score-display');
+    if (topScoreElement) {
+      topScoreElement.textContent = this.topScore.toLocaleString();
+    }
   }
 } 

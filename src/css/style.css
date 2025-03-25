@@ -8,7 +8,7 @@ body, html {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  font-family: Arial, sans-serif;
+  font-family: 'system-ui', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 #game-container {
@@ -19,13 +19,106 @@ body, html {
 
 #info {
   position: absolute;
-  top: 10px;
-  width: 100%;
-  text-align: center;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   color: white;
-  background-color: rgba(0, 0, 0, 0.5);
-  padding: 10px;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 20px 30px;
+  border-radius: 15px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   z-index: 100;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.5s ease, visibility 0.5s;
+}
+
+#info.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+#info p {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  margin: 10px 0;
+}
+
+#info .key {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 12px;
+  border-radius: 6px;
+  margin: 0 2px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#info .warning {
+  color: #ffd700;
+  font-weight: 600;
+  margin-top: 15px;
+  display: block;
+}
+
+#score {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 15px 20px;
+  border-radius: 12px;
+  font-family: 'system-ui', sans-serif;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  min-width: 180px;
+}
+
+#score div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 5px 0;
+}
+
+#score .label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+#score .value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffd700;
+}
+
+#score .top-score {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#score .top-score .label {
+  color: rgba(255, 215, 0, 0.7);
+  font-weight: 600;
+}
+
+#score .top-score .value {
+  color: #ffd700;
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; visibility: hidden; }
 }
 
 #game-over {
@@ -34,29 +127,73 @@ body, html {
   left: 50%;
   transform: translate(-50%, -50%);
   color: white;
-  font-size: 3rem;
   text-align: center;
-  background: rgba(0, 0, 0, 0.7);
-  padding: 2rem;
-  border-radius: 1rem;
+  background: rgba(0, 0, 0, 0.9);
+  padding: 2.5rem;
+  border-radius: 20px;
   z-index: 200;
   display: none;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  min-width: 300px;
+}
+
+#game-over h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: #ff4444;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+#game-over .stats {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  font-size: 1.2rem;
+}
+
+#game-over .stats div {
+  margin: 0.5rem 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 1rem;
+}
+
+#game-over .stats .label {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+#game-over .stats .value {
+  color: #ffd700;
+  font-weight: bold;
 }
 
 #restart-button {
   padding: 1rem 2rem;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   margin-top: 1rem;
   cursor: pointer;
-  background-color: #e74c3c;
+  background: linear-gradient(135deg, #00b4db, #0083b0);
   color: white;
   border: none;
-  border-radius: 0.5rem;
-  transition: background-color 0.3s;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  font-weight: 600;
 }
 
 #restart-button:hover {
-  background-color: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #00c6db, #0095b0);
+}
+
+#restart-button:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* Debug Panel Styles */
