@@ -203,15 +203,11 @@ export class AssetManager {
     
     // Try different path formats to ensure file is found
     const possiblePaths = [
-      `/assets/models/${modelName}`,    // Most likely path format
-      `assets/models/${modelName}`,     // Alternative path format
-      `models/${modelName}`,            // From public/assets folder
-      `/models/${modelName}`,           // From server root
-      `./models/${modelName}`,          // Relative current
-      `../models/${modelName}`,         // Up one level
-      `src/models/${modelName}`,        // From project root
-      `/src/models/${modelName}`,       // Absolute from server root
-      `./src/models/${modelName}`       // Relative from current
+      `${import.meta.env.BASE_URL}assets/models/${modelName}`,    // Vite base URL with assets
+      `assets/models/${modelName}`,                               // Relative to base
+      `models/${modelName}`,                                      // Direct from models
+      `./${modelName}`,                                          // Current directory
+      `${modelName}`                                             // Just filename
     ];
     
     // Set a loading timeout
