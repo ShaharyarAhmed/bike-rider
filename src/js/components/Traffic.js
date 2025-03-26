@@ -62,7 +62,44 @@ export class Traffic {
       }
     }
     
-    // Update the spawn timer
+    // Update all vehicles - limit updates to vehicles near the player
+    const vehiclesToRemove = [];
+    
+    for (let i = 0; i < this.vehicles.length; i++) {
+      const vehicle = this.vehicles[i];
+      
+      // Check if vehicle should be removed (too far behind player)
+      const isBehindPlayer = vehicle.position.z > playerPosition.z + this.despawnDistance;
+      if (isBehindPlayer) {
+        vehiclesToRemove.push(i);
+        continue;
+      }
+      
+      // Only update vehicles within 200 units of the player
+      const distanceToPlayer = Math.abs(vehicle.position.z - playerPosition.z);
+      if (distanceToPlayer < 200) {
+        try {
+          vehicle.update(deltaTime, this.vehicles, this.lanes);
+        } catch (error) {
+          console.error(`Error updating vehicle: ${error.message}`);
+          vehiclesToRemove.push(i);
+        }
+      }
+    }
+    
+    // Remove vehicles marked for removal (in reverse order to avoid index issues)
+    for (let i = vehiclesToRemove.length - 1; i >= 0; i--) {
+      const index = vehiclesToRemove[i];
+      const vehicle = this.vehicles[index];
+      
+      // Remove from scene
+      if (vehicle) {
+        this.scene.remove(vehicle);
+        this.vehicles.splice(index, 1);
+      }
+    }
+    
+    // Update spawn timer
     this.spawnTimer -= deltaTime;
     
     // Try to spawn new vehicles if cooldown has passed and we have room
@@ -83,43 +120,6 @@ export class Traffic {
         if (spawned) {
           this.lastSpawnPosition.copy(playerPosition);
         }
-      }
-    }
-    
-    // Update all vehicles - limit updates to vehicles near the player
-    const vehiclesToRemove = [];
-    
-    for (let i = 0; i < this.vehicles.length; i++) {
-      const vehicle = this.vehicles[i];
-      
-      // Check if vehicle should be removed (too far behind player)
-      const isBehindPlayer = vehicle.position.z > playerPosition.z + this.despawnDistance;
-      if (isBehindPlayer) {
-        vehiclesToRemove.push(i);
-        continue;
-      }
-      
-      // Only update vehicles within 200 units of the player
-      const distanceToPlayer = Math.abs(vehicle.position.z - playerPosition.z);
-      if (distanceToPlayer < 200) {
-        try {
-          vehicle.update(deltaTime, this.vehicles);
-        } catch (error) {
-          console.error(`Error updating vehicle: ${error.message}`);
-          vehiclesToRemove.push(i);
-        }
-      }
-    }
-    
-    // Remove vehicles marked for removal (in reverse order to avoid index issues)
-    for (let i = vehiclesToRemove.length - 1; i >= 0; i--) {
-      const index = vehiclesToRemove[i];
-      const vehicle = this.vehicles[index];
-      
-      // Remove from scene
-      if (vehicle) {
-        this.scene.remove(vehicle);
-        this.vehicles.splice(index, 1);
       }
     }
     

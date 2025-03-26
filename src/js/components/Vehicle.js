@@ -30,6 +30,7 @@ export class Vehicle extends THREE.Object3D {
     this.targetLane = lane;
     this.laneChangeSpeed = 2;
     this.hasModel = false;
+    this.hasChangedLane = false; // Track if vehicle has already changed lanes
     
     // Materials
     this.normalMaterial = new THREE.MeshPhongMaterial({ color });
@@ -356,8 +357,67 @@ export class Vehicle extends THREE.Object3D {
     }
   }
   
+  // Check if it's safe to change to a target lane
+  canChangeLane(targetLane, otherVehicles) {
+    const safeDistance = this.speed * 2 + 5; // Safe distance based on speed
+    
+    for (const other of otherVehicles) {
+      if (other === this) continue;
+      
+      // Only check vehicles in the target lane
+      if (Math.abs(other.position.x - targetLane) < 1) {
+        // Check distance in Z direction
+        const distanceZ = Math.abs(this.position.z - other.position.z);
+        if (distanceZ < safeDistance) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+  
+  // Try to change lanes if possible
+  tryChangeLane(otherVehicles, availableLanes) {
+    // Don't change lanes if already changing or has changed before
+    if (this.changingLane || this.hasChangedLane) return;
+    
+    // Get current lane index based on actual position
+    const currentLaneIndex = availableLanes.findIndex(
+      laneX => Math.abs(this.position.x - laneX) < 1
+    );
+    
+    if (currentLaneIndex === -1) {
+      console.warn('Vehicle not in any valid lane:', this.position.x);
+      return;
+    }
+    
+    // Randomly choose direction (left or right)
+    const direction = Math.random() < 0.5 ? -1 : 1;
+    
+    // Get target lane index
+    const targetLaneIndex = currentLaneIndex + direction;
+    
+    // Check if target lane exists
+    if (targetLaneIndex >= 0 && targetLaneIndex < availableLanes.length) {
+      const targetLane = availableLanes[targetLaneIndex];
+      
+      // Check if it's safe to change lanes
+      if (this.canChangeLane(targetLane, otherVehicles)) {
+        this.changingLane = true;
+        this.targetLane = targetLane;
+        this.hasChangedLane = true; // Mark that this vehicle has changed lanes
+        console.log(`Vehicle changing from lane ${currentLaneIndex} to ${targetLaneIndex} (x: ${this.position.x} -> ${targetLane})`);
+      }
+    }
+  }
+  
   // Update vehicle state and position
-  update(deltaTime, otherVehicles) {
+  update(deltaTime, otherVehicles, availableLanes) {
+    // Increase lane change probability to 40% chance per 2 seconds
+    if (!this.hasChangedLane && Math.random() < 0.4 * deltaTime) {
+      this.tryChangeLane(otherVehicles, availableLanes);
+    }
+    
     // Check for potential collisions with other vehicles
     let needToSlow = false;
     let nearestFrontVehicle = null;
@@ -373,7 +433,7 @@ export class Vehicle extends THREE.Object3D {
       // Only consider vehicles ahead of us (with smaller Z value since we move in negative Z)
       if (otherPos.z >= myPos.z) continue;
       
-      // Check if in same lane (X position within 2 units - increased from 1.5)
+      // Check if in same lane (X position within 2 units)
       if (Math.abs(myPos.x - otherPos.x) > 2) continue;
       
       // Calculate distance to vehicle ahead
@@ -381,7 +441,7 @@ export class Vehicle extends THREE.Object3D {
       
       // If vehicle is close ahead, we need to slow down
       // Safe distance is proportional to our speed
-      const safeDistance = this.speed * 1.5 + 3; // Increased minimum distance
+      const safeDistance = this.speed * 1.5 + 3;
       
       if (distance < safeDistance && distance < minDistance) {
         needToSlow = true;
@@ -426,12 +486,15 @@ export class Vehicle extends THREE.Object3D {
       if (Math.abs(myPos.x - this.targetLane) < 0.1) {
         myPos.x = this.targetLane; // Snap to exact lane position
         this.changingLane = false;
+        this.lane = availableLanes.indexOf(this.targetLane); // Update lane index based on actual position
       }
     }
     
     // Move vehicle forward based on its speed
-    // The negative sign makes it move in the same direction as the bike
     this.position.z -= this.speed * deltaTime;
+    
+    // Update brake lights
+    this.updateBrakeLights();
   }
   
   // Set braking material on brake lights
