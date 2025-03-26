@@ -7,18 +7,18 @@ export class Traffic {
   constructor(scene) {
     this.scene = scene;
     this.vehicles = [];
-    this.maxActiveVehicles = 8; // Reduced for better performance
+    this.maxActiveVehicles = 12; // Increased from 8 for higher density
     this.lanes = [-4, 0, 4]; // Match road lane positions
     
     this.spawnDistanceAhead = 120; // Distance ahead of player to spawn vehicles
     this.despawnDistance = 100;    // Distance behind player to despawn vehicles
     
-    this.spawnCooldown = 1.0;      // Time between spawn attempts
+    this.spawnCooldown = 0.8;      // Decreased from 1.0 for more frequent spawns
     this.spawnTimer = 0;           // Current cooldown timer
     
     // Model loading probability controls
     this.modelLoadingEnabled = true;  // Can be toggled to completely disable spawning
-    this.loadingProbability = 0.8;    // Chance of actually loading a model when spawn is attempted
+    this.loadingProbability = 0.9;    // Increased from 0.8 for more consistent spawning
     this.performanceAdjustCounter = 0; // Counter to track frame rate impact
     
     // Visualization flags
@@ -36,7 +36,7 @@ export class Traffic {
     
     // Keep track of last spawn distance to prevent too many vehicles at the same area
     this.lastSpawnPosition = new THREE.Vector3(0, 0, 0);
-    this.minimumSpawnInterval = 50; // Increased to reduce vehicle density
+    this.minimumSpawnInterval = 40; // Decreased from 50 to allow closer vehicle spacing
     
     console.log("Traffic system initialized");
   }
@@ -170,17 +170,17 @@ export class Traffic {
     const laneX = this.lanes[laneIndex];
     
     // Check if the lane is clear for spawning
-    if (!this.isLaneClear(laneX, spawnZ, 60)) {
+    if (!this.isLaneClear(laneX, spawnZ, 50)) { // Decreased from 60 to allow closer spawning
       return false;
     }
     
     // Random vehicle type (more cars than trucks)
-    const type = Math.random() < 0.7 ? 'car' : 'truck';
+    const type = Math.random() < 0.8 ? 'car' : 'truck';
     
-    // Random speed based on vehicle type
+    // Random speed based on vehicle type with increased ranges
     const speed = type === 'truck' 
-      ? 3 + Math.random() * 3  // Truck: 3-6 speed
-      : 5 + Math.random() * 5; // Car: 5-10 speed
+      ? 4 + Math.random() * 4  // Truck: 4-8 speed (increased from 3-6)
+      : 6 + Math.random() * 6; // Car: 6-12 speed (increased from 5-10)
     
     // Random color
     const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff];
@@ -191,25 +191,21 @@ export class Traffic {
       ? { width: 2.6, height: 3.2, length: 9 }
       : { width: 1.8, height: 1.5, length: 4 };
     
-    // Create the vehicle with rotation to face in the positive Z direction (direction of travel)
+    // Create the vehicle with rotation to face in the positive Z direction
     const position = new THREE.Vector3(laneX, 0, spawnZ);
     
     try {
-      // Create new vehicle - if it fails, it will throw an error
+      // Create new vehicle
       const vehicle = new Vehicle(type, size, speed, laneIndex, color, position);
-      
-      // Make sure the vehicle is facing the right direction
-      // Note: Individual model rotations are handled in Vehicle.js
-      // This is just the initial rotation of the vehicle container
       vehicle.rotation.y = Math.PI;
       
       // Add to scene and tracking array
       this.scene.add(vehicle);
       this.vehicles.push(vehicle);
       
-      console.log(`Created ${type} at lane ${laneIndex} (x=${laneX}, z=${spawnZ.toFixed(1)}) with player at z=${playerPosition.z.toFixed(1)}`);
+      console.log(`Created ${type} at lane ${laneIndex} (x=${laneX}, z=${spawnZ.toFixed(1)}) with speed=${speed.toFixed(1)}`);
       
-      // Add debug markers only if debug mode is explicitly enabled
+      // Add debug markers if debug mode is enabled
       if (this.debug === true) {
         this.addDebugMarkers(vehicle);
         vehicle.setDebugMode(true);

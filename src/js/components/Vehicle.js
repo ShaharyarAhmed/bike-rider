@@ -413,8 +413,8 @@ export class Vehicle extends THREE.Object3D {
   
   // Update vehicle state and position
   update(deltaTime, otherVehicles, availableLanes) {
-    // Increase lane change probability to 40% chance per 2 seconds
-    if (!this.hasChangedLane && Math.random() < 0.4 * deltaTime) {
+    // Decrease lane change probability to 25% chance per 2 seconds
+    if (!this.hasChangedLane && Math.random() < 0.25 * deltaTime) {
       this.tryChangeLane(otherVehicles, availableLanes);
     }
     
