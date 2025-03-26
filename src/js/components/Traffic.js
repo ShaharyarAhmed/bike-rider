@@ -7,18 +7,18 @@ export class Traffic {
   constructor(scene) {
     this.scene = scene;
     this.vehicles = [];
-    this.maxActiveVehicles = 12; // Increased from 8 for higher density
+    this.maxActiveVehicles = 16; // Increased from 12 for even higher density
     this.lanes = [-4, 0, 4]; // Match road lane positions
     
     this.spawnDistanceAhead = 120; // Distance ahead of player to spawn vehicles
     this.despawnDistance = 100;    // Distance behind player to despawn vehicles
     
-    this.spawnCooldown = 0.8;      // Decreased from 1.0 for more frequent spawns
+    this.spawnCooldown = 0.6;      // Decreased from 0.8 for more frequent spawns
     this.spawnTimer = 0;           // Current cooldown timer
     
     // Model loading probability controls
     this.modelLoadingEnabled = true;  // Can be toggled to completely disable spawning
-    this.loadingProbability = 0.9;    // Increased from 0.8 for more consistent spawning
+    this.loadingProbability = 0.95;    // Increased from 0.9 for more consistent spawning
     this.performanceAdjustCounter = 0; // Counter to track frame rate impact
     
     // Visualization flags
@@ -36,7 +36,7 @@ export class Traffic {
     
     // Keep track of last spawn distance to prevent too many vehicles at the same area
     this.lastSpawnPosition = new THREE.Vector3(0, 0, 0);
-    this.minimumSpawnInterval = 40; // Decreased from 50 to allow closer vehicle spacing
+    this.minimumSpawnInterval = 30; // Decreased from 40 to allow even closer vehicle spacing
     
     console.log("Traffic system initialized");
   }
@@ -54,10 +54,10 @@ export class Traffic {
       
       // If frame time is too long (low FPS), reduce loading probability
       if (deltaTime > 0.05) { // Less than 20 FPS
-        this.loadingProbability = Math.max(0.3, this.loadingProbability - 0.1);
+        this.loadingProbability = Math.max(0.4, this.loadingProbability - 0.1); // Increased minimum from 0.3 to 0.4
         console.log(`Performance adjustment: Reducing loading probability to ${this.loadingProbability.toFixed(2)}`);
-      } else if (deltaTime < 0.033 && this.vehicles.length < 5) { // More than 30 FPS and few vehicles
-        this.loadingProbability = Math.min(0.9, this.loadingProbability + 0.05);
+      } else if (deltaTime < 0.033 && this.vehicles.length < 8) { // More than 30 FPS and moderate vehicle count
+        this.loadingProbability = Math.min(0.95, this.loadingProbability + 0.05);
         console.log(`Performance adjustment: Increasing loading probability to ${this.loadingProbability.toFixed(2)}`);
       }
     }

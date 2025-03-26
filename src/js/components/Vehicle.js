@@ -278,7 +278,7 @@ export class Vehicle extends THREE.Object3D {
       {
         modelName: 'police_car1.glb',
         type: 'car',
-        scale: { x: 1, y: 1, z: 1 },
+        scale: { x: 1.5, y: 1.5, z: 1.5 },
         rotation: { y: 0 },
         position: { x: 0, y: 0, z: 0 },
         probability: 0.1, // 10% chance for police car
