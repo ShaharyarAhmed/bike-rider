@@ -186,15 +186,6 @@ export class Vehicle extends THREE.Object3D {
     // Model configurations for different vehicle types
     const modelConfigs = [
       {
-        modelName: 'truck2.glb',
-        type: 'truck',
-        scale: { x: 1.3, y: 1.3, z: 1.3 },
-        rotation: { y: Math.PI / 2 },
-        position: { x: 0, y: 0, z: 0 },
-        probability: 0.3, // 30% chance for truck2
-        enabled: true
-      },
-      {
         modelName: 'truck1.glb', 
         type: 'truck',
         scale: { x: 1.3, y: 1.3, z: 1.3 },
@@ -206,8 +197,8 @@ export class Vehicle extends THREE.Object3D {
       {
         modelName: 'mini_truck1.glb',
         type: 'truck',
-        scale: { x: 1.0, y: 1.0, z: 1.0 },
-        rotation: { y: Math.PI },
+        scale: { x: 0.2, y: 0.2, z: 0.2 },
+        rotation: { y: THREE.MathUtils.degToRad(0) },
         position: { x: 0, y: 0, z: 0 },
         probability: 0.3, // 30% chance for mini truck
         enabled: true
@@ -260,7 +251,7 @@ export class Vehicle extends THREE.Object3D {
       {
         modelName: 'car3_red.glb',
         type: 'car',
-        scale: { x: 1, y: 1, z: 1 },
+        scale: { x: 1.2, y: 1.2, z: 1.2 },
         rotation: { y: THREE.MathUtils.degToRad(0) },
         position: { x: 0, y: 0.6, z: 0 },
         probability: 0.2, // 20% chance for red car
@@ -269,7 +260,7 @@ export class Vehicle extends THREE.Object3D {
       {
         modelName: 'car5_taxi.glb',
         type: 'car',
-        scale: { x: 1.2, y: 1.2, z: 1.2 },
+        scale: { x: 0.05, y: 0.05, z: 0.05 },
         rotation: { y: THREE.MathUtils.degToRad(0) },
         position: { x: 0, y: 0, z: 0 },
         probability: 0.2, // 20% chance for taxi

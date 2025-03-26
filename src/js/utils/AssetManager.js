@@ -26,17 +26,24 @@ export class AssetManager {
     
     // Vehicle model configuration for probability-based loading
     this.vehicleModels = {
+      // Trucks
       'truck1.glb': { probability: 0.7, enabled: true },
-      // 'truck2.glb': { probability: 0.3, enabled: true },
-      // 'mini_truck1.glb': { probability: 0.3, enabled: true },
-      'bus1.glb': { probability: 0.1, enabled: true },
-      'bus2.glb': { probability: 0.1, enabled: true },
-      'car1_grey.glb': { probability: 0.2, enabled: true },
-      'car2_blue.glb': { probability: 0.2, enabled: true },
-      'car3_red.glb': { probability: 0.2, enabled: true },
-      'car4_white.glb': { probability: 0.2, enabled: true },
-      // 'car5_taxi.glb': { probability: 0.2, enabled: true },
-      'police_car1.glb': { probability: 0.1, enabled: true },
+      'truck2.glb': { probability: 0.6, enabled: true },
+      'mini_truck1.glb': { probability: 0.5, enabled: true },
+      
+      // Buses
+      'bus1.glb': { probability: 0.4, enabled: true },
+      'bus2.glb': { probability: 0.4, enabled: true },
+      
+      // Cars
+      'car1_grey.glb': { probability: 0.6, enabled: true },
+      'car2_blue.glb': { probability: 0.6, enabled: true },
+      'car3_red.glb': { probability: 0.6, enabled: true },
+      'car4_white.glb': { probability: 0.6, enabled: true },
+      'car5_taxi.glb': { probability: 0.4, enabled: true },
+      'police_car1.glb': { probability: 0.3, enabled: true },
+      
+      // Bikes
       'bike1.glb': { probability: 1.0, enabled: true }
     };
     
@@ -89,7 +96,7 @@ export class AssetManager {
   getEnabledModels(type) {
     // For backward compatibility with old Vehicle code
     if (type === 'car' || type === 'truck' || type === 'bike') {
-      const truckModels = ['truck1.glb', 'truck2.glb', 'mini_truck1.glb'];
+      const truckModels = ['truck1.glb', 'mini_truck1.glb'];
       const carModels = [
         'car1_grey.glb', 
         'car2_blue.glb', 
