@@ -24,11 +24,11 @@ export class Vehicle extends THREE.Object3D {
     this.originalSpeed = speed; // Store original speed for recovery
     this.lane = lane;
     this.color = color;
-    this.maxSpeed = 15;
+    this.maxSpeed = 20;
     this.braking = false;
     this.changingLane = false;
     this.targetLane = lane;
-    this.laneChangeSpeed = 2;
+    this.laneChangeSpeed = 2.5;
     this.hasModel = false;
     this.hasChangedLane = false; // Track if vehicle has already changed lanes
     
@@ -441,7 +441,7 @@ export class Vehicle extends THREE.Object3D {
       
       // If vehicle is close ahead, we need to slow down
       // Safe distance is proportional to our speed
-      const safeDistance = this.speed * 1.5 + 3;
+      const safeDistance = this.speed * 2 + 4;
       
       if (distance < safeDistance && distance < minDistance) {
         needToSlow = true;
@@ -453,22 +453,22 @@ export class Vehicle extends THREE.Object3D {
     // Adjust speed based on vehicles ahead
     if (needToSlow && nearestFrontVehicle) {
       // If too close, brake harder
-      if (minDistance < 3) {
-        this.speed = Math.max(0, this.speed - 8 * deltaTime);
+      if (minDistance < 4) {
+        this.speed = Math.max(0, this.speed - 12 * deltaTime);
         this.braking = true;
       } 
       // Otherwise gradually adjust to the speed of the vehicle ahead
       else {
-        const targetSpeed = Math.min(this.originalSpeed, nearestFrontVehicle.speed * 0.9);
+        const targetSpeed = Math.min(this.originalSpeed, nearestFrontVehicle.speed * 0.95);
         this.speed = this.speed > targetSpeed ? 
-          Math.max(targetSpeed, this.speed - 3 * deltaTime) : 
+          Math.max(targetSpeed, this.speed - 4 * deltaTime) : 
           this.speed;
         this.braking = true;
       }
     } else {
       // No vehicle ahead, resume normal speed
       if (this.speed < this.originalSpeed) {
-        this.speed = Math.min(this.originalSpeed, this.speed + 2 * deltaTime);
+        this.speed = Math.min(this.originalSpeed, this.speed + 3 * deltaTime);
       }
       this.braking = false;
     }

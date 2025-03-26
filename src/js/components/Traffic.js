@@ -179,8 +179,8 @@ export class Traffic {
     
     // Random speed based on vehicle type with increased ranges
     const speed = type === 'truck' 
-      ? 4 + Math.random() * 4  // Truck: 4-8 speed (increased from 3-6)
-      : 6 + Math.random() * 6; // Car: 6-12 speed (increased from 5-10)
+      ? 6 + Math.random() * 4  // Truck: 6-10 speed (increased from 4-8)
+      : 8 + Math.random() * 7; // Car: 8-15 speed (increased from 6-12)
     
     // Random color
     const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff];
