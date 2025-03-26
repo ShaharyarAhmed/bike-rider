@@ -29,5 +29,12 @@ export default defineConfig({
     }
   },
   publicDir: 'public',
-  assetsInclude: ['**/*.glb', '**/*.gltf']
+  assetsInclude: ['**/*.glb', '**/*.gltf', '**/*.png', '**/*.jpg', '**/*.jpeg'],
+  server: {
+    fs: {
+      // Allow serving files from one level up from the package root,
+      // so our models can be imported from src/models
+      allow: ['..']
+    }
+  }
 }) 

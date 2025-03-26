@@ -203,11 +203,10 @@ export class AssetManager {
     
     // Try different path formats to ensure file is found
     const possiblePaths = [
-      `${import.meta.env.BASE_URL}assets/models/${modelName}`,    // Vite base URL with assets
-      `assets/models/${modelName}`,                               // Relative to base
-      `models/${modelName}`,                                      // Direct from models
-      `./${modelName}`,                                          // Current directory
-      `${modelName}`                                             // Just filename
+      // Development mode - direct from source
+      `/src/models/${modelName}`,
+      // Production mode - from assets
+      `${import.meta.env.BASE_URL}assets/models/${modelName}`
     ];
     
     // Set a loading timeout
