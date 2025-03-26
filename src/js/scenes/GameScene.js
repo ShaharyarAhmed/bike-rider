@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Road } from '../components/Road.js';
 import { Traffic } from '../components/Traffic.js';
 import { Environment } from '../components/Environment.js';
+import bg2 from '../../assets/bg2.png';
 
 export class GameScene extends THREE.Scene {
   constructor() {
@@ -40,7 +41,7 @@ export class GameScene extends THREE.Scene {
   setupDistantSkyline() {
     // Load the skyline image texture
     const textureLoader = new THREE.TextureLoader();
-    const skylineTexture = textureLoader.load('/src/assets/bg2.png');
+    const skylineTexture = textureLoader.load(bg2);
     
     // Create a large wall/plane far in the distance, make it wider and taller for better visibility
     const skylineWidth = 950; // Increased width
