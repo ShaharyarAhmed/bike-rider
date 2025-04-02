@@ -153,21 +153,20 @@ export class Portal extends THREE.Object3D {
     nextCtx.textAlign = 'center';
     nextCtx.textBaseline = 'middle';
     nextCtx.fillStyle = '#00ffff';
-    nextCtx.fillText('Next Game', nextCanvas.width/2, nextCanvas.height/2);
+    nextCtx.fillText('NEXT GAME', nextCanvas.width/2, nextCanvas.height/2);
     
     // Create texture from canvas
     const nextTexture = new THREE.CanvasTexture(nextCanvas);
     const nextMaterial = new THREE.MeshBasicMaterial({
       map: nextTexture, 
       transparent: true,
-      side: THREE.DoubleSide
+      side: THREE.FrontSide // Use FrontSide to prevent mirroring
     });
     
     // Create text mesh for next portal
     const nextTextGeometry = new THREE.PlaneGeometry(4, 1);
     this.nextTextMesh = new THREE.Mesh(nextTextGeometry, nextMaterial);
     this.nextTextMesh.position.set(0, 4, 0); // Position above portal
-    // Don't set initial rotation - we'll update it dynamically
     this.add(this.nextTextMesh);
     
     // Create canvas for previous portal text
@@ -183,21 +182,20 @@ export class Portal extends THREE.Object3D {
     prevCtx.textAlign = 'center';
     prevCtx.textBaseline = 'middle';
     prevCtx.fillStyle = '#ff3333';
-    prevCtx.fillText('Return to previous game', prevCanvas.width/2, prevCanvas.height/2);
+    prevCtx.fillText('RETURN TO PREVIOUS GAME', prevCanvas.width/2, prevCanvas.height/2);
     
     // Create texture from canvas
     const prevTexture = new THREE.CanvasTexture(prevCanvas);
     const prevMaterial = new THREE.MeshBasicMaterial({
       map: prevTexture, 
       transparent: true,
-      side: THREE.DoubleSide
+      side: THREE.FrontSide // Use FrontSide to prevent mirroring
     });
     
     // Create text mesh for previous portal
     const prevTextGeometry = new THREE.PlaneGeometry(7, 1);
     this.prevTextMesh = new THREE.Mesh(prevTextGeometry, prevMaterial);
     this.prevTextMesh.position.set(0, 4, 0); // Position above portal
-    // Don't set initial rotation - we'll update it dynamically
     this.add(this.prevTextMesh);
     
     // Initially show only next text
@@ -242,14 +240,17 @@ export class Portal extends THREE.Object3D {
     
     // Update text rotation to face bike if bike position is provided
     if (bikePosition && this.nextTextMesh && this.prevTextMesh) {
-      // Calculate direction to bike
+      // Calculate direction from portal to bike (not from bike to portal)
       const directionToBike = new THREE.Vector3();
-      directionToBike.subVectors(this.position, new THREE.Vector3(bikePosition.x, this.position.y, bikePosition.z)).normalize();
+      directionToBike.subVectors(
+        new THREE.Vector3(bikePosition.x, this.position.y, bikePosition.z),
+        this.position
+      ).normalize();
       
-      // Calculate angle from direction
+      // Calculate angle to face the bike properly
       const angle = Math.atan2(directionToBike.x, directionToBike.z);
       
-      // Apply rotation to text meshes
+      // Apply rotation to text meshes - make them face the bike
       this.nextTextMesh.rotation.y = angle;
       this.prevTextMesh.rotation.y = angle;
     }
