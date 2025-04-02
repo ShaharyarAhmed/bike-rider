@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Road } from '../components/Road.js';
 import { Traffic } from '../components/Traffic.js';
 import { Environment } from '../components/Environment.js';
+import { Portal } from '../components/Portal.js';
 import bg2 from '../../assets/bg2.png';
 
 export class GameScene extends THREE.Scene {
@@ -29,6 +30,10 @@ export class GameScene extends THREE.Scene {
     
     // Add traffic system - pass 'this' as the scene
     this.traffic = new Traffic(this);
+    
+    // Add portal system
+    this.portal = new Portal();
+    this.add(this.portal);
     
     // Store last update position to track player movement
     this.lastUpdatePosition = new THREE.Vector3(0, 0, 0);
@@ -138,6 +143,14 @@ export class GameScene extends THREE.Scene {
     // Update traffic
     if (this.traffic) {
       this.traffic.update(deltaTime, bikePosition);
+    }
+    
+    // Update portal
+    if (this.portal) {
+      this.portal.update(deltaTime, this.totalDistanceTraveled);
+      
+      // Portal class now handles the redirect with effects
+      this.portal.checkCollision(bikePosition);
     }
     
     // Update skyline wall position to maintain constant distance from bike
