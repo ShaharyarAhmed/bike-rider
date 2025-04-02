@@ -147,9 +147,9 @@ export class GameScene extends THREE.Scene {
     
     // Update portal
     if (this.portal) {
-      this.portal.update(deltaTime, this.totalDistanceTraveled, bikePosition);
+      this.portal.update(deltaTime, this.totalDistanceTraveled);
       
-      // Check portal collision - the portal will handle the redirection itself
+      // Portal class now handles the redirect with effects
       this.portal.checkCollision(bikePosition);
     }
     
